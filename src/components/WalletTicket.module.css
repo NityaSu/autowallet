@@ -1,0 +1,351 @@
+.wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  height: 250px;
+  filter: drop-shadow(0 18px 36px rgba(45, 24, 16, 0.22));
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    #ffe8d0 0%,
+    #ffd4a8 18%,
+    #ffb366 45%,
+    #ff8c42 72%,
+    #f06d1a 100%
+  );
+}
+
+.lightBlob {
+  position: absolute;
+  left: -5%;
+  top: -30%;
+  width: 60%;
+  height: 160%;
+  background: radial-gradient(
+    ellipse 70% 90% at 35% 50%,
+    rgba(255, 250, 240, 0.85) 0%,
+    rgba(255, 235, 210, 0.4) 35%,
+    transparent 65%
+  );
+  mix-blend-mode: screen;
+  pointer-events: none;
+  filter: blur(2px);
+  z-index: 2;
+}
+
+.warmGlow {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 45%;
+  height: 100%;
+  background: radial-gradient(
+    circle at 85% 50%,
+    rgba(255, 100, 30, 0.3) 0%,
+    transparent 55%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 40px rgba(160, 60, 10, 0.15);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 4;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 180px;
+}
+
+.noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 4;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n2)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 80px;
+}
+
+.notch {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  background: var(--background);
+  border-radius: 50%;
+  z-index: 10;
+}
+
+.notchTl {
+  top: -13px;
+  left: 28px;
+}
+.notchTr {
+  top: -13px;
+  right: 28px;
+}
+.notchBl {
+  bottom: -13px;
+  left: 28px;
+}
+.notchBr {
+  bottom: -13px;
+  right: 28px;
+}
+
+.content {
+  position: relative;
+  z-index: 5;
+  padding: 22px 28px 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brandText {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 3.5px;
+  color: #2d1810;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.statusBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(45, 24, 14, 0.06);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(45, 24, 14, 0.12);
+  backdrop-filter: blur(4px);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  background: #3cb371;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(60, 179, 113, 0.5);
+}
+
+.statusPaused {
+  background: #dc2626;
+  box-shadow: 0 0 5px rgba(220, 38, 38, 0.45);
+}
+
+.statusText {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #2d1810;
+  opacity: 0.75;
+  text-transform: uppercase;
+}
+
+.nameSection {
+  margin-top: 4px;
+}
+
+.sectionLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: #2d1810;
+  opacity: 0.45;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.ownerName {
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 900;
+  letter-spacing: -0.8px;
+  color: #2d1810;
+  line-height: 0.95;
+  text-transform: uppercase;
+  font-family: var(--font-inter), "SF Pro Display", -apple-system,
+    BlinkMacSystemFont, sans-serif;
+}
+
+.agentInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.agentName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2d1810;
+  opacity: 0.7;
+  letter-spacing: 0.3px;
+}
+
+.agentDomain {
+  font-size: 11px;
+  font-weight: 600;
+  color: #2d1810;
+  opacity: 0.45;
+  letter-spacing: 0.5px;
+}
+
+.dividerDot {
+  font-size: 11px;
+  color: #2d1810;
+  opacity: 0.35;
+}
+
+.statsRow {
+  display: flex;
+  gap: 24px;
+  margin-top: auto;
+  padding-top: 8px;
+  flex-wrap: wrap;
+}
+
+.statLabel {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  color: #2d1810;
+  opacity: 0.4;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.statValue {
+  font-size: 16px;
+  font-weight: 900;
+  color: #2d1810;
+  letter-spacing: -0.4px;
+}
+
+.statMeta {
+  font-size: 11px;
+  opacity: 0.5;
+  font-weight: 700;
+}
+
+.watermark {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.watermarkFill {
+  font-size: 56px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: rgba(45, 24, 14, 0.055);
+  text-transform: uppercase;
+  line-height: 0.85;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: var(--font-inter), "SF Pro Display", sans-serif;
+}
+
+.watermarkStroke {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  pointer-events: none;
+  font-size: 56px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: transparent;
+  text-transform: uppercase;
+  line-height: 0.85;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  -webkit-text-stroke: 1.2px rgba(45, 24, 14, 0.07);
+  font-family: var(--font-inter), "SF Pro Display", sans-serif;
+}
+
+.perforation {
+  position: absolute;
+  right: 78px;
+  top: 24px;
+  bottom: 24px;
+  width: 0;
+  border-left: 1.5px dashed rgba(45, 24, 14, 0.08);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.manage {
+  position: relative;
+  z-index: 6;
+  margin-top: 10px;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2d1810;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.manage:hover {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .wrapper {
+    height: 280px;
+  }
+  .statsRow {
+    gap: 16px;
+  }
+  .watermark,
+  .watermarkStroke,
+  .perforation {
+    display: none;
+  }
+}

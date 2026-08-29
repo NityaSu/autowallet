@@ -23,14 +23,15 @@ import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
 const links = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/send", label: "Send", icon: ArrowLeftRight },
-  { href: "/agents", label: "Agents", icon: Bot },
-  { href: "/wallets", label: "Wallets", icon: Wallet },
-  { href: "/activity", label: "Activity", icon: Activity },
-  { href: "/policies", label: "Policies", icon: Shield },
-  { href: "/apis", label: "API Endpoints", icon: Globe },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/", label: "Overview", icon: LayoutDashboard, inNav: true },
+  { href: "/send", label: "Send", icon: ArrowLeftRight, inNav: true },
+  { href: "/activity", label: "Activity", icon: Activity, inNav: true },
+  { href: "/settings", label: "Settings", icon: Settings, inNav: true },
+  // Mock agent UI — keep routes, hide from the demo nav.
+  { href: "/agents", label: "Agents", icon: Bot, inNav: false },
+  { href: "/wallets", label: "Wallets", icon: Wallet, inNav: false },
+  { href: "/policies", label: "Policies", icon: Shield, inNav: false },
+  { href: "/apis", label: "API Endpoints", icon: Globe, inNav: false },
 ] as const;
 
 function isOn(href: string, path: string) {
@@ -75,26 +76,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
 
         <nav className="flex flex-1 flex-col gap-0.5">
-          {links.map((link) => {
-            const Icon = link.icon;
-            const on = isOn(link.href, path);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cx(
-                  "flex w-full items-center gap-2.5 rounded-[10px] px-3 py-[9px] font-sans text-[13.5px] font-medium no-underline",
-                  on
-                    ? "bg-soft text-brand"
-                    : "text-muted hover:bg-soft hover:text-foreground",
-                )}
-                onClick={() => setMenuOpen(false)}
-              >
-                <Icon size={16} aria-hidden />
-                {link.label}
-              </Link>
-            );
-          })}
+          {links
+            .filter((link) => link.inNav)
+            .map((link) => {
+              const Icon = link.icon;
+              const on = isOn(link.href, path);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cx(
+                    "flex w-full items-center gap-2.5 rounded-[10px] px-3 py-[9px] font-sans text-[13.5px] font-medium no-underline",
+                    on
+                      ? "bg-soft text-brand"
+                      : "text-muted hover:bg-soft hover:text-foreground",
+                  )}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <Icon size={16} aria-hidden />
+                  {link.label}
+                </Link>
+              );
+            })}
         </nav>
 
         <div className="mt-3 rounded-xl border border-line bg-[#fafbfc] p-3">

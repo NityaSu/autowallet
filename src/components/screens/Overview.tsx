@@ -3,18 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Activity,
   ArrowLeftRight,
   BookOpen,
-  Bot,
-  FileText,
   Shield,
   Target,
   TrendingDown,
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { SpendBar } from "@/components/SpendBar";
-import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
 import { formatTxTime, greeting, money } from "@/lib/money";
 import { overviewFromTransfers } from "@/lib/transfer-stats";
@@ -23,14 +20,13 @@ import { cx } from "@/lib/tw";
 
 export function Overview() {
   const router = useRouter();
-  const { account, agents, transfers } = useWallet();
+  const { account, transfers } = useWallet();
   const [hello, setHello] = useState("Good afternoon");
 
   useEffect(() => {
     setHello(greeting());
   }, []);
 
-  const featured = agents.find((a) => a.id === "research") ?? agents[0];
   const stats = useMemo(
     () => overviewFromTransfers(transfers, account.handle),
     [transfers, account.handle],
@@ -44,8 +40,6 @@ export function Overview() {
     { label: "Sent", pct: stats.sentPct, color: "#fc6203" },
     { label: "Received", pct: stats.receivedPct, color: "#fde0c3" },
   ];
-
-  if (!featured) return null;
 
   return (
     <section>
@@ -151,55 +145,6 @@ export function Overview() {
       <div className={tw.ovSplit}>
         <article className={tw.card}>
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="m-0 text-base font-semibold">Agent Wallets</h2>
-            <button
-              type="button"
-              className={tw.textBtn}
-              onClick={() => router.push("/agents")}
-            >
-              View all
-            </button>
-          </div>
-          {agents.map((agent) => (
-            <div
-              className="grid grid-cols-1 items-center gap-3 border-t border-line py-3 xl:grid-cols-[40px_1.2fr_0.7fr_0.7fr_1.2fr]"
-              key={agent.id}
-            >
-              <span className={tw.avatar}>
-                <Bot size={16} />
-              </span>
-              <div>
-                <strong className="block text-sm">{agent.name}</strong>
-                <p className={tw.handle}>{agent.handle}</p>
-              </div>
-              <div>
-                <span className="block text-[11px] text-muted">Balance</span>
-                <b>{money(agent.balanceUsd)}</b>
-              </div>
-              <div>
-                <span className="block text-[11px] text-muted">Daily limit</span>
-                <b>{money(agent.dailyCapUsd)}</b>
-              </div>
-              <SpendBar
-                compact
-                showAmount={false}
-                spent={agent.spentTodayUsd}
-                cap={agent.dailyCapUsd}
-              />
-            </div>
-          ))}
-        </article>
-
-        <WalletTicket
-          agent={featured}
-          owner={account.owner}
-          onManage={() => router.push(`/agents/${featured.id}`)}
-        />
-      </div>
-
-      <div className={tw.ovSplit}>
-        <article className={tw.card}>
-          <div className="mb-2 flex items-center justify-between">
             <h2 className="m-0 text-base font-semibold">Recent Payment Activity</h2>
             <button
               type="button"
@@ -297,10 +242,9 @@ export function Overview() {
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
-                  { href: "/wallets", icon: Wallet, label: "Add Funds" },
-                  { href: "/wallets", icon: Bot, label: "Create Agent" },
-                  { href: "/policies", icon: FileText, label: "New Policy" },
-                  { href: "/settings", icon: BookOpen, label: "View Docs" },
+                  { href: "/send", icon: ArrowLeftRight, label: "Send money" },
+                  { href: "/activity", icon: Activity, label: "Activity" },
+                  { href: "/settings", icon: BookOpen, label: "Settings" },
                 ] as const
               ).map((action) => (
                 <button

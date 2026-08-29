@@ -6,6 +6,7 @@ import * as tw from "@/lib/tw";
 
 export function Activity() {
   const { agents, payments, transfers } = useWallet();
+  const showMockAgentPayments = false;
 
   function agentName(id: string) {
     return agents.find((a) => a.id === id)?.name ?? "Agent";
@@ -14,7 +15,7 @@ export function Activity() {
   return (
     <section className={tw.page}>
       <h1 className={tw.h1}>Activity</h1>
-      <p className={tw.sub}>Person-to-person sends, then agent API payments.</p>
+      <p className={tw.sub}>Person-to-person sends on the ledger.</p>
 
       <h2 className={tw.h2}>Sends</h2>
       {transfers.length === 0 ? (
@@ -37,21 +38,25 @@ export function Activity() {
         </ul>
       )}
 
-      <h2 className={tw.h2}>Agent payments</h2>
-      <ul className={tw.pay}>
-        {payments.map((tx) => (
-          <li key={tx.id} className={tw.payItem}>
-            <span>
-              {agentName(tx.agentId)} → {tx.apiName}
-              <span className={tw.muted}> · {tx.at}</span>
-            </span>
-            <b className={tw.amt}>{money(tx.amountUsd)}</b>
-            <em className={tx.status === "settled" ? tw.ok : tw.bad}>
-              {tx.status === "settled" ? "✓ Settled" : "✕ Blocked"}
-            </em>
-          </li>
-        ))}
-      </ul>
+      {showMockAgentPayments ? (
+        <>
+          <h2 className={tw.h2}>Agent payments</h2>
+          <ul className={tw.pay}>
+            {payments.map((tx) => (
+              <li key={tx.id} className={tw.payItem}>
+                <span>
+                  {agentName(tx.agentId)} → {tx.apiName}
+                  <span className={tw.muted}> · {tx.at}</span>
+                </span>
+                <b className={tw.amt}>{money(tx.amountUsd)}</b>
+                <em className={tx.status === "settled" ? tw.ok : tw.bad}>
+                  {tx.status === "settled" ? "✓ Settled" : "✕ Blocked"}
+                </em>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </section>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useWallet } from "@/context/WalletProvider";
 import { money } from "@/lib/money";
+import * as tw from "@/lib/tw";
 
 export function Activity() {
   const { agents, payments, transfers } = useWallet();
@@ -11,41 +12,41 @@ export function Activity() {
   }
 
   return (
-    <section className="aw-page">
-      <h1 className="aw-h1">Activity</h1>
-      <p className="aw-sub">Person-to-person sends, then agent API payments.</p>
+    <section className={tw.page}>
+      <h1 className={tw.h1}>Activity</h1>
+      <p className={tw.sub}>Person-to-person sends, then agent API payments.</p>
 
-      <h2 className="aw-h2">Sends</h2>
+      <h2 className={tw.h2}>Sends</h2>
       {transfers.length === 0 ? (
-        <p className="aw-muted">No person-to-person sends yet.</p>
+        <p className={tw.muted}>No person-to-person sends yet.</p>
       ) : (
-        <ul className="aw-pay">
+        <ul className={tw.pay}>
           {transfers.map((tx) => (
-            <li key={tx.id}>
+            <li key={tx.id} className={tw.payItem}>
               <span>
                 {tx.fromHandle} → {tx.toHandle}
-                <span className="aw-muted">
+                <span className={tw.muted}>
                   {" "}
                   · {tx.memo} · {tx.at}
                 </span>
               </span>
-              <b className="amt">{money(tx.amountUsd)}</b>
-              <em className="ok">✓ Sent</em>
+              <b className={tw.amt}>{money(tx.amountUsd)}</b>
+              <em className={tw.ok}>✓ Sent</em>
             </li>
           ))}
         </ul>
       )}
 
-      <h2 className="aw-h2">Agent payments</h2>
-      <ul className="aw-pay">
+      <h2 className={tw.h2}>Agent payments</h2>
+      <ul className={tw.pay}>
         {payments.map((tx) => (
-          <li key={tx.id}>
+          <li key={tx.id} className={tw.payItem}>
             <span>
               {agentName(tx.agentId)} → {tx.apiName}
-              <span className="aw-muted"> · {tx.at}</span>
+              <span className={tw.muted}> · {tx.at}</span>
             </span>
-            <b className="amt">{money(tx.amountUsd)}</b>
-            <em className={tx.status === "settled" ? "ok" : "bad"}>
+            <b className={tw.amt}>{money(tx.amountUsd)}</b>
+            <em className={tx.status === "settled" ? tw.ok : tw.bad}>
               {tx.status === "settled" ? "✓ Settled" : "✕ Blocked"}
             </em>
           </li>

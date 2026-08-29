@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CloudMark } from "@/components/CloudMark";
+import * as tw from "@/lib/tw";
+import { cx } from "@/lib/tw";
 
 export function LoginForm() {
   const router = useRouter();
@@ -37,31 +39,33 @@ export function LoginForm() {
   }
 
   return (
-    <div className="aw-login">
-      <div className="aw-login-card">
-        <div className="aw-brand" style={{ margin: "0 0 18px" }}>
+    <div className="grid min-h-dvh place-items-center bg-background p-6">
+      <div className="w-full max-w-[420px] rounded-2xl border border-line bg-white p-6 shadow-[0_18px_40px_rgba(45,24,16,0.08)]">
+        <div className={cx(tw.brand, "mb-[18px]")}>
           <CloudMark width={38} height={25} />
           <span>
-            <strong>AutoWallet</strong>
-            <em>Demo — no real money</em>
+            <strong className={tw.brandName}>AutoWallet</strong>
+            <em className={tw.brandTag}>Demo — no real money</em>
           </span>
         </div>
-        <p className="aw-sub" style={{ marginBottom: 16 }}>
+        <p className={cx(tw.sub, "mb-4")}>
           This is a portfolio demonstration. No real money is transacted. All
           balances are simulated.
         </p>
         <form onSubmit={onSubmit}>
-          <label className="aw-field">
+          <label className={tw.field}>
             Handle
             <input
+              className={tw.control}
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
               autoComplete="username"
             />
           </label>
-          <label className="aw-field" style={{ marginTop: 12 }}>
+          <label className={cx(tw.field, "mt-3")}>
             Password
             <input
+              className={tw.control}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -69,20 +73,17 @@ export function LoginForm() {
             />
           </label>
           {error ? (
-            <p style={{ margin: "12px 0 0", fontWeight: 650, color: "var(--bad)" }}>
-              {error}
-            </p>
+            <p className="mt-3 font-semibold text-bad">{error}</p>
           ) : null}
           <button
             type="submit"
-            className="aw-btn primary"
-            style={{ marginTop: 16, width: "100%" }}
+            className={cx(tw.btnPrimary, "mt-4 w-full")}
             disabled={pending}
           >
             {pending ? "Signing in…" : "Log in"}
           </button>
         </form>
-        <p className="aw-muted" style={{ marginTop: 16 }}>
+        <p className={cx(tw.muted, "mt-4")}>
           Demo accounts (password <b>demo</b>): <code>sunik.pay</code> ·{" "}
           <code>midas.pay</code>
         </p>

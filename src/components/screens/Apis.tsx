@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { labSteps } from "@/data/wallets";
 import { useWallet } from "@/context/WalletProvider";
 import { money } from "@/lib/money";
+import * as tw from "@/lib/tw";
+import { cx } from "@/lib/tw";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -78,36 +80,38 @@ export function Apis() {
   if (!agent || !api) return null;
 
   return (
-    <section className="aw-page">
-      <h1 className="aw-h1">APIs</h1>
-      <p className="aw-sub">
+    <section className={tw.page}>
+      <h1 className={tw.h1}>APIs</h1>
+      <p className={tw.sub}>
         Paid endpoints return HTTP 402. The agent pays only if policy allows it.
       </p>
-      <div className="aw-list" style={{ marginBottom: 22 }}>
+      <div className={cx(tw.list, "mb-[22px]")}>
         {apis.map((item) => (
-          <article key={item.id} className="aw-card">
-            <div className="aw-row">
+          <article key={item.id} className={tw.card}>
+            <div className={tw.row}>
               <div>
-                <h3 className="aw-name">{item.name}</h3>
-                <p className="aw-handle">
+                <h3 className={tw.name}>{item.name}</h3>
+                <p className={tw.handle}>
                   {item.host}
                   {item.path}
                 </p>
               </div>
               <b>{money(item.priceUsd)}</b>
             </div>
-            <p className="aw-muted" style={{ margin: "8px 0 0" }}>
-              {item.description}
-            </p>
+            <p className={cx(tw.muted, "mt-2")}>{item.description}</p>
           </article>
         ))}
       </div>
-      <h2 className="aw-h2">402 Lab</h2>
-      <div className="aw-grid-2">
-        <article className="aw-card">
-          <label className="aw-field">
+      <h2 className={tw.h2}>402 Lab</h2>
+      <div className={tw.grid2}>
+        <article className={tw.card}>
+          <label className={tw.field}>
             Paying as
-            <select value={agentId} onChange={(e) => setAgentId(e.target.value)}>
+            <select
+              className={tw.control}
+              value={agentId}
+              onChange={(e) => setAgentId(e.target.value)}
+            >
               {agents.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.handle} · {money(a.balanceUsd)}
@@ -115,9 +119,13 @@ export function Apis() {
               ))}
             </select>
           </label>
-          <label className="aw-field" style={{ marginTop: 12 }}>
+          <label className={cx(tw.field, "mt-3")}>
             Paid API
-            <select value={apiId} onChange={(e) => setApiId(e.target.value)}>
+            <select
+              className={tw.control}
+              value={apiId}
+              onChange={(e) => setApiId(e.target.value)}
+            >
               {apis.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name} · {money(item.priceUsd)}
@@ -125,42 +133,36 @@ export function Apis() {
               ))}
             </select>
           </label>
-          <p className="aw-muted" style={{ margin: "10px 0 14px" }}>
-            {api.description}
-          </p>
+          <p className={cx(tw.muted, "mt-2.5 mb-3.5")}>{api.description}</p>
           <button
             type="button"
-            className="aw-btn primary"
+            className={tw.btnPrimary}
             disabled={running}
             onClick={fire}
           >
             {running ? "Paying…" : "Fire request"}
           </button>
-          <pre className="aw-log">
+          <pre className={tw.log}>
             {log.length ? log.join("\n") : "// waiting for a request"}
           </pre>
           {verdict ? (
-            <p
-              className={denied ? "bad" : "ok"}
-              style={{ margin: "10px 0 0", fontWeight: 650 }}
-            >
+            <p className={cx(denied ? tw.bad : tw.ok, "mt-2.5")}>
               {denied ? "Blocked" : step === 7 ? "Settled" : "Checking"} ·{" "}
               {verdict}
             </p>
           ) : null}
         </article>
-        <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
+        <ol className="m-0 grid list-none gap-2 p-0">
           {labSteps.map((s) => (
             <li
               key={s.id}
-              className="aw-card"
-              style={{
-                opacity: denied && s.id >= 5 ? 0.4 : 1,
-                borderColor: step === s.id ? "var(--orange)" : undefined,
-              }}
+              className={cx(
+                tw.card,
+                denied && s.id >= 5 && "opacity-40",
+                step === s.id && "border-brand",
+              )}
             >
-              <b style={{ color: "var(--orange)" }}>{s.id}</b> {s.label} —{" "}
-              {s.detail}
+              <b className="text-brand">{s.id}</b> {s.label} — {s.detail}
             </li>
           ))}
         </ol>

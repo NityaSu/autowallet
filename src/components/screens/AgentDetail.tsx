@@ -6,6 +6,8 @@ import { SpendBar } from "@/components/SpendBar";
 import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
 import { money } from "@/lib/money";
+import * as tw from "@/lib/tw";
+import { cx } from "@/lib/tw";
 
 export function AgentDetail({ agentId }: { agentId: string }) {
   const { agentById, paymentsFor, toggleAgent, fundAgent, account } =
@@ -15,69 +17,58 @@ export function AgentDetail({ agentId }: { agentId: string }) {
 
   if (!agent) {
     return (
-      <section className="aw-page">
-        <Link href="/agents" className="aw-back">
+      <section className={tw.page}>
+        <Link href="/agents" className={tw.back}>
           ← Agents
         </Link>
-        <h1 className="aw-h1">Agent not found</h1>
+        <h1 className={tw.h1}>Agent not found</h1>
       </section>
     );
   }
 
   return (
-    <section className="aw-page">
-      <Link href="/agents" className="aw-back">
+    <section className={tw.page}>
+      <Link href="/agents" className={tw.back}>
         ← Agents / {agent.name}
       </Link>
 
-      <div className="aw-agent-head" style={{ marginBottom: 18 }}>
-        <div className="aw-who">
-          <span className="aw-avatar">
+      <div className={cx(tw.agentHead, "mb-[18px]")}>
+        <div className={tw.who}>
+          <span className={tw.avatar}>
             <Bot size={20} />
           </span>
           <div>
-            <h1 className="aw-h1" style={{ margin: 0 }}>
-              {agent.name}
-            </h1>
-            <p className="aw-handle">{agent.handle}</p>
+            <h1 className={cx(tw.h1, "mb-0")}>{agent.name}</h1>
+            <p className={tw.handle}>{agent.handle}</p>
           </div>
         </div>
-        <span
-          className={`aw-status${agent.status === "paused" ? " is-paused" : ""}`}
-        >
+        <span className={agent.status === "paused" ? tw.statusPaused : tw.statusOk}>
           {agent.status === "active" ? "Active" : "Paused"}
         </span>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div className="mb-4">
         <WalletTicket agent={agent} owner={account.owner} />
       </div>
 
-      <div className="aw-grid-2">
-        <article className="aw-card">
-          <span className="aw-kicker">Wallet Balance</span>
-          <strong
-            style={{
-              display: "block",
-              margin: "14px 0 8px",
-              fontSize: 36,
-              letterSpacing: "-0.04em",
-            }}
-          >
+      <div className={tw.grid2}>
+        <article className={tw.card}>
+          <span className={tw.kicker}>Wallet Balance</span>
+          <strong className="mt-3.5 mb-2 block text-4xl tracking-tight">
             {money(agent.balanceUsd)}
           </strong>
-          <p className="aw-muted">+ {money(agent.fundedUsd)} funded</p>
-          <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+          <p className={tw.muted}>+ {money(agent.fundedUsd)} funded</p>
+          <div className="mt-4 flex gap-2">
             <button
               type="button"
-              className="aw-btn primary"
+              className={tw.btnPrimary}
               onClick={() => fundAgent(agent.id, 10)}
             >
               Fund +$10
             </button>
             <button
               type="button"
-              className="aw-btn"
+              className={tw.btn}
               onClick={() => toggleAgent(agent.id)}
             >
               {agent.status === "active" ? "Pause agent" : "Resume agent"}
@@ -85,45 +76,43 @@ export function AgentDetail({ agentId }: { agentId: string }) {
           </div>
         </article>
 
-        <article className="aw-card">
-          <span className="aw-kicker">Spending Policy</span>
-          <div className="aw-meta" style={{ marginTop: 14 }}>
+        <article className={tw.card}>
+          <span className={tw.kicker}>Spending Policy</span>
+          <div className={cx(tw.meta, "mt-3.5")}>
             <div>
-              <span>Daily limit</span>
-              <b>{money(agent.dailyCapUsd)}</b>
+              <span className="block text-xs text-muted">Daily limit</span>
+              <b className="text-[15px]">{money(agent.dailyCapUsd)}</b>
             </div>
             <div>
-              <span>Per request</span>
-              <b>{money(agent.perRequestMaxUsd)}</b>
+              <span className="block text-xs text-muted">Per request</span>
+              <b className="text-[15px]">{money(agent.perRequestMaxUsd)}</b>
             </div>
           </div>
-          <p className="aw-kicker" style={{ marginTop: 18 }}>
-            Allowed APIs
-          </p>
-          <ul className="aw-allow">
+          <p className={cx(tw.kicker, "mt-[18px]")}>Allowed APIs</p>
+          <ul className={tw.allow}>
             {agent.allowlist.map((host) => (
               <li key={host}>{host}</li>
             ))}
           </ul>
-          <Link href="/policies" className="aw-btn" style={{ marginTop: 14 }}>
+          <Link href="/policies" className={cx(tw.btn, "mt-3.5")}>
             Edit policy →
           </Link>
         </article>
       </div>
 
-      <div className="aw-card" style={{ marginTop: 14 }}>
+      <div className={cx(tw.card, "mt-3.5")}>
         <SpendBar spent={agent.spentTodayUsd} cap={agent.dailyCapUsd} />
       </div>
 
-      <h2 className="aw-h2">Payment Activity</h2>
-      <ul className="aw-pay">
+      <h2 className={tw.h2}>Payment Activity</h2>
+      <ul className={tw.pay}>
         {activity.map((tx) => (
-          <li key={tx.id}>
+          <li key={tx.id} className={tw.payItem}>
             <span>
               {money(tx.amountUsd)} · {tx.apiName}
             </span>
-            <span className="aw-muted">{tx.at}</span>
-            <em className={tx.status === "settled" ? "ok" : "bad"}>
+            <span className={tw.muted}>{tx.at}</span>
+            <em className={tx.status === "settled" ? tw.ok : tw.bad}>
               {tx.status === "settled" ? "✓ Settled" : "✕ Blocked"}
             </em>
           </li>

@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useWallet } from "@/context/WalletProvider";
 import { money } from "@/lib/money";
+import * as tw from "@/lib/tw";
+import { cx } from "@/lib/tw";
 
 export function Send() {
   const { you, people, transfers, sendToPerson, ledgerReady, ledgerError } =
@@ -47,32 +49,36 @@ export function Send() {
   }
 
   return (
-    <section className="aw-page">
-      <h1 className="aw-h1">Send</h1>
-      <p className="aw-sub">
+    <section className={tw.page}>
+      <h1 className={tw.h1}>Send</h1>
+      <p className={tw.sub}>
         Person to person. Fake money on a Postgres ledger — refresh keeps the
         balance.
       </p>
       {ledgerError ? (
-        <p style={{ fontWeight: 650, color: "var(--bad)" }}>{ledgerError}</p>
+        <p className="font-semibold text-bad">{ledgerError}</p>
       ) : null}
 
-      <div className="aw-ov-stats" style={{ marginTop: 18 }}>
-        <article className="aw-ov-stat">
+      <div className={cx(tw.stats, "mt-[18px]")}>
+        <article className={tw.stat}>
           <div>
-            <span>You</span>
-            <strong className="is-orange">{money(you.balanceUsd)}</strong>
-            <em>
+            <span className="block text-xs font-semibold text-muted">You</span>
+            <strong className="mt-2 mb-1.5 block text-[26px] tracking-tight text-brand">
+              {money(you.balanceUsd)}
+            </strong>
+            <em className="text-xs not-italic text-muted">
               {you.name} · {you.handle}
             </em>
           </div>
         </article>
         {them ? (
-          <article className="aw-ov-stat">
+          <article className={tw.stat}>
             <div>
-              <span>Them</span>
-              <strong>{money(them.balanceUsd)}</strong>
-              <em>
+              <span className="block text-xs font-semibold text-muted">Them</span>
+              <strong className="mt-2 mb-1.5 block text-[26px] tracking-tight">
+                {money(them.balanceUsd)}
+              </strong>
+              <em className="text-xs not-italic text-muted">
                 {them.name} · {them.handle}
               </em>
             </div>
@@ -80,36 +86,39 @@ export function Send() {
         ) : null}
       </div>
 
-      <form className="aw-card" style={{ marginTop: 16 }} onSubmit={onSubmit}>
-        <label className="aw-field">
+      <form className={cx(tw.card, "mt-4")} onSubmit={onSubmit}>
+        <label className={tw.field}>
           To
           <input
+            className={tw.control}
             value={to}
             onChange={(e) => setTo(e.target.value)}
             autoComplete="off"
           />
         </label>
-        <label className="aw-field" style={{ marginTop: 12 }}>
+        <label className={cx(tw.field, "mt-3")}>
           Amount
           <input
+            className={tw.control}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             inputMode="decimal"
           />
         </label>
-        <label className="aw-field" style={{ marginTop: 12 }}>
+        <label className={cx(tw.field, "mt-3")}>
           Memo
-          <input value={memo} onChange={(e) => setMemo(e.target.value)} />
+          <input
+            className={tw.control}
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+          />
         </label>
         {error ? (
-          <p style={{ margin: "12px 0 0", fontWeight: 650, color: "var(--bad)" }}>
-            {error}
-          </p>
+          <p className="mt-3 font-semibold text-bad">{error}</p>
         ) : null}
         <button
           type="submit"
-          className="aw-btn primary"
-          style={{ marginTop: 16 }}
+          className={cx(tw.btnPrimary, "mt-4")}
           disabled={pending || !ledgerReady}
         >
           Send {preview > 0 ? money(preview) : ""}{" "}
@@ -117,22 +126,22 @@ export function Send() {
         </button>
       </form>
 
-      <h2 className="aw-h2">Transfers</h2>
+      <h2 className={tw.h2}>Transfers</h2>
       {transfers.length === 0 ? (
-        <p className="aw-muted">Nothing sent yet.</p>
+        <p className={tw.muted}>Nothing sent yet.</p>
       ) : (
-        <ul className="aw-pay">
+        <ul className={tw.pay}>
           {transfers.map((tx) => (
-            <li key={tx.id}>
+            <li key={tx.id} className={tw.payItem}>
               <span>
                 {tx.fromHandle} → {tx.toHandle}
-                <span className="aw-muted">
+                <span className={tw.muted}>
                   {" "}
                   · {tx.memo} · {tx.at}
                 </span>
               </span>
-              <b className="amt">{money(tx.amountUsd)}</b>
-              <em className="ok">✓ Settled</em>
+              <b className={tw.amt}>{money(tx.amountUsd)}</b>
+              <em className={tw.ok}>✓ Settled</em>
             </li>
           ))}
         </ul>

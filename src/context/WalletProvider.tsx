@@ -109,6 +109,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       owner: data.you!.name,
       firstName: data.you!.name.split(" ")[0] ?? data.you!.name,
       handle: data.you!.handle,
+      balanceUsd: data.you!.balanceUsd,
     }));
     setLedgerReady(true);
   }, []);
@@ -312,7 +313,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       ledgerError,
       refreshLedger,
       sendToPerson,
-      account,
+      account: { ...account, balanceUsd: you.balanceUsd },
       agents,
       payments,
       apis,

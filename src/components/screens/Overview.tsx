@@ -88,7 +88,7 @@ export function Overview() {
           <div>
             <span>Total Balance</span>
             <strong className="is-orange">{money(account.balanceUsd)}</strong>
-            <em>Across all wallets</em>
+            <em>Available to send</em>
           </div>
           <i className="aw-ov-ico">
             <Wallet size={18} />

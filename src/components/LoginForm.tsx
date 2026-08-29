@@ -9,24 +9,40 @@ import { cx } from "@/lib/tw";
 export function LoginForm() {
   const router = useRouter();
   const next = useSearchParams().get("next") || "/";
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [name, setName] = useState("");
   const [handle, setHandle] = useState("sunik.pay");
   const [password, setPassword] = useState("demo");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+
+  function switchMode(nextMode: "login" | "signup") {
+    setMode(nextMode);
+    setError("");
+    if (nextMode === "signup") {
+      setHandle("");
+      setPassword("");
+    } else {
+      setHandle("sunik.pay");
+      setPassword("demo");
+    }
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     setPending(true);
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch(mode === "signup" ? "/api/signup" : "/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ handle, password }),
+        body: JSON.stringify(
+          mode === "signup" ? { name, handle, password } : { handle, password },
+        ),
       });
       const data = (await res.json()) as { ok: boolean; reason?: string };
       if (!data.ok) {
-        setError(data.reason ?? "Could not log in.");
+        setError(data.reason ?? "Could not continue.");
         return;
       }
       router.push(next.startsWith("/") ? next : "/");
@@ -53,13 +69,25 @@ export function LoginForm() {
           balances are simulated.
         </p>
         <form onSubmit={onSubmit}>
-          <label className={tw.field}>
+          {mode === "signup" ? (
+            <label className={tw.field}>
+              Name
+              <input
+                className={tw.control}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+              />
+            </label>
+          ) : null}
+          <label className={cx(tw.field, mode === "signup" && "mt-3")}>
             Handle
             <input
               className={tw.control}
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
               autoComplete="username"
+              placeholder="nina.pay"
             />
           </label>
           <label className={cx(tw.field, "mt-3")}>
@@ -69,7 +97,9 @@ export function LoginForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              autoComplete={
+                mode === "signup" ? "new-password" : "current-password"
+              }
             />
           </label>
           {error ? (
@@ -80,12 +110,40 @@ export function LoginForm() {
             className={cx(tw.btnPrimary, "mt-4 w-full")}
             disabled={pending}
           >
-            {pending ? "Signing in…" : "Log in"}
+            {pending
+              ? mode === "signup"
+                ? "Creating…"
+                : "Signing in…"
+              : mode === "signup"
+                ? "Create account"
+                : "Log in"}
           </button>
         </form>
         <p className={cx(tw.muted, "mt-4")}>
-          Demo accounts (password <b>demo</b>): <code>sunik.pay</code> ·{" "}
-          <code>midas.pay</code>
+          {mode === "login" ? (
+            <>
+              Demo accounts (password <b>demo</b>): <code>sunik.pay</code> ·{" "}
+              <code>midas.pay</code>
+              <button
+                type="button"
+                className={cx(tw.textBtn, "ml-1")}
+                onClick={() => switchMode("signup")}
+              >
+                Create an account
+              </button>
+            </>
+          ) : (
+            <>
+              Starts with $50.00 fake money.{" "}
+              <button
+                type="button"
+                className={tw.textBtn}
+                onClick={() => switchMode("login")}
+              >
+                Log in instead
+              </button>
+            </>
+          )}
         </p>
       </div>
     </div>

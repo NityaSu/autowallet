@@ -48,7 +48,14 @@ export function AgentDetail({ agentId }: { agentId: string }) {
       </div>
 
       <div className="mb-4">
-        <WalletTicket agent={agent} owner={account.owner} />
+        <WalletTicket
+          owner={account.owner}
+          handle={agent.handle}
+          balanceUsd={agent.balanceUsd}
+          spentTodayUsd={agent.spentTodayUsd}
+          receivedTodayUsd={0}
+          live={agent.status === "active"}
+        />
       </div>
 
       <div className={tw.grid2}>

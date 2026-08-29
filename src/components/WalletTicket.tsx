@@ -1,21 +1,25 @@
-import type { Agent } from "@/data/wallets";
-import { money, remaining, splitName, usedPct } from "@/lib/money";
+import { money, splitName } from "@/lib/money";
 import { CloudMark } from "@/components/CloudMark";
 import styles from "./WalletTicket.module.css";
 
 export function WalletTicket({
-  agent,
   owner,
+  handle,
+  balanceUsd,
+  spentTodayUsd,
+  receivedTodayUsd,
+  live = true,
   onManage,
 }: {
-  agent: Agent;
   owner: string;
+  handle: string;
+  balanceUsd: number;
+  spentTodayUsd: number;
+  receivedTodayUsd: number;
+  live?: boolean;
   onManage?: () => void;
 }) {
   const { first, last } = splitName(owner);
-  const used = usedPct(agent.spentTodayUsd, agent.dailyCapUsd);
-  const left = remaining(agent.spentTodayUsd, agent.dailyCapUsd);
-  const live = agent.status === "active";
 
   return (
     <div>
@@ -57,7 +61,7 @@ export function WalletTicket({
             </div>
 
             <div className={styles.nameSection}>
-              <div className={styles.sectionLabel}>Agent Wallet · Owner</div>
+              <div className={styles.sectionLabel}>Personal wallet · Owner</div>
               <div className={styles.ownerName}>
                 {first}
                 {last ? (
@@ -68,9 +72,7 @@ export function WalletTicket({
                 ) : null}
               </div>
               <div className={styles.agentInfo}>
-                <span className={styles.agentName}>{agent.name}</span>
-                <span className={styles.dividerDot}>·</span>
-                <span className={styles.agentDomain}>{agent.handle}</span>
+                <span className={styles.agentDomain}>{handle}</span>
               </div>
             </div>
 
@@ -78,26 +80,21 @@ export function WalletTicket({
               <div>
                 <div className={styles.statLabel}>Balance</div>
                 <div className={styles.statValue}>
-                  {money(agent.balanceUsd)}{" "}
+                  {money(balanceUsd)}{" "}
                   <span className={styles.statMeta}>USD</span>
                 </div>
               </div>
               <div>
-                <div className={styles.statLabel}>Daily Limit</div>
-                <div className={styles.statValue}>
-                  {money(agent.dailyCapUsd)}
-                </div>
+                <div className={styles.statLabel}>Spent today</div>
+                <div className={styles.statValue}>{money(spentTodayUsd)}</div>
               </div>
               <div>
-                <div className={styles.statLabel}>Used Today</div>
-                <div className={styles.statValue}>
-                  {money(agent.spentTodayUsd)}{" "}
-                  <span className={styles.statMeta}>{used}%</span>
-                </div>
+                <div className={styles.statLabel}>Received today</div>
+                <div className={styles.statValue}>{money(receivedTodayUsd)}</div>
               </div>
               <div>
-                <div className={styles.statLabel}>Remaining</div>
-                <div className={styles.statValue}>{money(left)}</div>
+                <div className={styles.statLabel}>Available</div>
+                <div className={styles.statValue}>{money(balanceUsd)}</div>
               </div>
             </div>
           </div>
@@ -105,7 +102,7 @@ export function WalletTicket({
       </div>
       {onManage ? (
         <button type="button" className={styles.manage} onClick={onManage}>
-          Manage Wallet →
+          Send money →
         </button>
       ) : null}
     </div>

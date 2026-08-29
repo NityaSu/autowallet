@@ -24,6 +24,8 @@ Demo logins (password `demo`):
 
 Send from Sunik to Midas, then hard-refresh: the ledger keeps the transfer. Log out and sign in as Midas to see the credit.
 
+Or create an account on `/login` (handle like `nina.pay`). New accounts start with **$50.00** fake money.
+
 ## Deploy (Vercel)
 
 1. Create a Postgres database (Neon or Vercel Postgres).

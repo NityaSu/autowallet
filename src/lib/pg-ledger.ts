@@ -1,8 +1,10 @@
+import bcrypt from "bcryptjs";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
 import { getDb, transfers, users } from "@/db";
-import { centsToUsd, usdToCents } from "@/lib/cents";
+import { centsToUsd, SIGNUP_BALANCE_CENTS, usdToCents } from "@/lib/cents";
 import {
   normalizeHandle,
+  validateSignupShape,
   validateTransferShape,
   type LedgerTransfer,
   type TransferInput,
@@ -160,4 +162,39 @@ export async function findUserById(id: string) {
   const db = getDb();
   const [row] = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return row ?? null;
+}
+
+export async function createUser(input: {
+  name?: string;
+  handle?: string;
+  password?: string;
+}) {
+  const shape = validateSignupShape(input);
+  if (!shape.ok) return shape;
+  const taken = await findUserByHandle(shape.handle);
+  if (taken) return { ok: false as const, reason: "That handle is taken." };
+
+  const db = getDb();
+  const id = crypto.randomUUID();
+  try {
+    await db.insert(users).values({
+      id,
+      handle: shape.handle,
+      name: shape.name,
+      passwordHash: bcrypt.hashSync(shape.password, 10),
+      balanceCents: SIGNUP_BALANCE_CENTS,
+    });
+  } catch {
+    return { ok: false as const, reason: "That handle is taken." };
+  }
+
+  return {
+    ok: true as const,
+    user: {
+      id,
+      handle: shape.handle,
+      name: shape.name,
+      balanceUsd: centsToUsd(SIGNUP_BALANCE_CENTS),
+    },
+  };
 }

@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
+import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
 import { formatTxTime, greeting, money } from "@/lib/money";
 import { overviewFromTransfers } from "@/lib/transfer-stats";
@@ -20,7 +21,7 @@ import { cx } from "@/lib/tw";
 
 export function Overview() {
   const router = useRouter();
-  const { account, transfers } = useWallet();
+  const { account, people, transfers } = useWallet();
   const [hello, setHello] = useState("Good afternoon");
 
   useEffect(() => {
@@ -140,6 +141,38 @@ export function Overview() {
             <Shield size={18} />
           </i>
         </article>
+      </div>
+
+      <div className={tw.ovSplit}>
+        <article className={tw.card}>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="m-0 text-base font-semibold">People</h2>
+          </div>
+          {people.map((person) => (
+            <div
+              className="grid grid-cols-1 items-center gap-3 border-t border-line py-3 sm:grid-cols-[1fr_auto]"
+              key={person.id}
+            >
+              <div>
+                <strong className="block text-sm">{person.name}</strong>
+                <p className={tw.handle}>{person.handle}</p>
+              </div>
+              <div>
+                <span className="block text-[11px] text-muted">Balance</span>
+                <b>{money(person.balanceUsd)}</b>
+              </div>
+            </div>
+          ))}
+        </article>
+
+        <WalletTicket
+          owner={account.owner}
+          handle={account.handle}
+          balanceUsd={account.balanceUsd}
+          spentTodayUsd={stats.spentToday}
+          receivedTodayUsd={stats.receivedToday}
+          onManage={() => router.push("/send")}
+        />
       </div>
 
       <div className={tw.ovSplit}>

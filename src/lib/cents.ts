@@ -8,3 +8,5 @@ export function usdToCents(usd: number): number | null {
 export function centsToUsd(cents: number) {
   return cents / 100;
 }
+
+export const SIGNUP_BALANCE_CENTS = 5000;

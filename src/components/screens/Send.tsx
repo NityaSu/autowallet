@@ -9,7 +9,7 @@ import { cx } from "@/lib/tw";
 export function Send() {
   const { you, people, transfers, sendToPerson, ledgerReady, ledgerError } =
     useWallet();
-  const them = people.find((p) => p.handle !== you.handle);
+  const others = people.filter((p) => p.handle !== you.handle);
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("5.00");
   const [memo, setMemo] = useState("coffee");
@@ -19,7 +19,7 @@ export function Send() {
 
   useEffect(() => {
     const other = people.find((p) => p.handle !== you.handle);
-    if (other) setTo(other.handle);
+    if (other) setTo((current) => current || other.handle);
   }, [you.handle, people]);
 
   const preview = useMemo(() => Number.parseFloat(amount) || 0, [amount]);
@@ -71,15 +71,15 @@ export function Send() {
             </em>
           </div>
         </article>
-        {them ? (
+        {recipient ? (
           <article className={tw.stat}>
             <div>
               <span className="block text-xs font-semibold text-muted">Them</span>
               <strong className="mt-2 mb-1.5 block text-[26px] tracking-tight">
-                {money(them.balanceUsd)}
+                {money(recipient.balanceUsd)}
               </strong>
               <em className="text-xs not-italic text-muted">
-                {them.name} · {them.handle}
+                {recipient.name} · {recipient.handle}
               </em>
             </div>
           </article>
@@ -89,12 +89,26 @@ export function Send() {
       <form className={cx(tw.card, "mt-4")} onSubmit={onSubmit}>
         <label className={tw.field}>
           To
-          <input
-            className={tw.control}
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            autoComplete="off"
-          />
+          {others.length > 0 ? (
+            <select
+              className={tw.control}
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            >
+              {others.map((person) => (
+                <option key={person.id} value={person.handle}>
+                  {person.name} · {person.handle}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className={tw.control}
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              autoComplete="off"
+            />
+          )}
         </label>
         <label className={cx(tw.field, "mt-3")}>
           Amount

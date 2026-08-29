@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: InterVariable;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Mono";
+  src: url("/fonts/dm-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Mono";
+  src: url("/fonts/dm-mono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #f5f6f8;
   --foreground: #1a1d23;
@@ -10,8 +34,14 @@
   --ok: #15803d;
   --bad: #dc2626;
   --soft: #fff1e8;
-  --font-ui: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Helvetica, Arial, sans-serif;
+  --font-ui: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-code: "DM Mono", Monaco, Consolas, monospace;
+}
+
+@supports (font-variation-settings: normal) {
+  :root {
+    --font-ui: InterVariable, sans-serif;
+  }
 }
 
 @theme inline {
@@ -21,13 +51,23 @@
   --color-orange-deep: var(--orange-deep);
   --color-muted: var(--muted);
   --color-line: var(--line);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-ui);
+  --font-mono: "DM Mono", Monaco, Consolas, monospace;
+}
+
+html {
+  font-family: var(--font-ui);
+  font-feature-settings: "liga" 1, "calt" 1;
+  font-optical-sizing: auto;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-ui);
+  font-feature-settings: "liga" 1, "calt" 1;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
 }
 
 .aw {
@@ -36,6 +76,7 @@ body {
   grid-template-columns: 248px 1fr;
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-ui);
 }
 
 .aw-side {
@@ -59,7 +100,8 @@ body {
 .aw-brand strong {
   display: block;
   font-size: 17px;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
+  font-weight: 700;
 }
 
 .aw-brand em {
@@ -68,6 +110,7 @@ body {
   font-style: normal;
   font-size: 11px;
   color: var(--muted);
+  font-family: var(--font-ui);
 }
 
 .aw-side-nav {
@@ -86,8 +129,9 @@ body {
   border-radius: 10px;
   color: var(--muted);
   font-size: 13.5px;
-  font-weight: 550;
+  font-weight: 500;
   text-decoration: none;
+  font-family: var(--font-ui);
 }
 
 .aw-side-link.is-on {
@@ -200,6 +244,7 @@ body {
 }
 
 .aw-search kbd {
+  font-family: var(--font-code);
   font-size: 11px;
   padding: 2px 6px;
   border-radius: 6px;
@@ -272,6 +317,7 @@ body {
   font-style: normal;
   font-size: 11px;
   color: var(--muted);
+  font-family: var(--font-code);
 }
 
 .aw-burger {
@@ -289,10 +335,22 @@ body {
 .aw-main {
   min-width: 0;
   padding: 24px 28px 48px;
+  font-family: var(--font-ui);
 }
 
 .aw-page {
   max-width: 1100px;
+}
+
+.aw-hello,
+.aw-h1,
+.aw-h2,
+.aw-sub,
+.aw-btn,
+.aw-text-btn,
+.aw-ov-stat,
+.aw-ov-actions button {
+  font-family: var(--font-ui);
 }
 
 .aw-hello {
@@ -383,6 +441,7 @@ button.aw-card {
   margin: 2px 0 0;
   color: var(--muted);
   font-size: 13px;
+  font-family: var(--font-code);
 }
 
 .aw-status {
@@ -480,6 +539,7 @@ button.aw-card {
 }
 
 .aw-pay .amt {
+  font-family: var(--font-code);
   font-variant-numeric: tabular-nums;
   font-weight: 650;
 }
@@ -597,6 +657,7 @@ button.aw-card {
   border-radius: 12px;
   background: #1c1612;
   color: #f3d5b5;
+  font-family: var(--font-code);
   font-size: 12px;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -628,14 +689,16 @@ button.aw-card {
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(10, 1fr);
-  gap: 2px;
-  height: 14px;
+  gap: 0;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e5e7eb;
 }
 
 .aw-spend-pips i {
   display: block;
-  border-radius: 1px;
-  background: #e5e7eb;
+  background: transparent;
 }
 
 .aw-spend-pips i.on {
@@ -644,6 +707,7 @@ button.aw-card {
 
 .aw-spend-amt {
   flex-shrink: 0;
+  font-family: var(--font-code);
   font-size: 15px;
   font-variant-numeric: tabular-nums;
 }

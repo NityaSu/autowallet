@@ -249,6 +249,34 @@ body {
   margin-left: auto;
 }
 
+.aw-demo-banner {
+  margin: 0 0 16px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.aw-login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--background);
+}
+
+.aw-login-card {
+  width: min(420px, 100%);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 18px 40px rgba(45, 24, 16, 0.08);
+}
+
 .aw-bell {
   position: relative;
   width: 40px;

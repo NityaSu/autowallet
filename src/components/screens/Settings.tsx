@@ -3,7 +3,7 @@
 import { useWallet } from "@/context/WalletProvider";
 
 export function Settings() {
-  const { account } = useWallet();
+  const { you } = useWallet();
 
   return (
     <section className="aw-page">
@@ -13,21 +13,22 @@ export function Settings() {
         <div className="aw-meta">
           <div>
             <span>Owner</span>
-            <b>{account.owner}</b>
+            <b>{you.name}</b>
           </div>
           <div>
             <span>Handle</span>
-            <b>{account.handle}</b>
+            <b>{you.handle}</b>
           </div>
           <div>
             <span>Rail</span>
-            <b>USDC mock</b>
+            <b>Fake USD on Postgres</b>
           </div>
         </div>
       </article>
       <p className="aw-note">
-        AutoWallet is frontend-first. Send and spend update mock balances in
-        the browser. A Postgres ledger comes later.
+        AutoWallet is a portfolio demo. Person-to-person send is a real
+        Postgres ledger with fake money. Agent screens are still in-memory
+        mocks.
       </p>
     </section>
   );

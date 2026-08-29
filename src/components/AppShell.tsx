@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { CloudMark } from "@/components/CloudMark";
+import { DemoBanner } from "@/components/DemoBanner";
 import { useWallet } from "@/context/WalletProvider";
 import { money } from "@/lib/money";
 
@@ -37,13 +38,18 @@ function isOn(href: string, path: string) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { account } = useWallet();
+  const { account, you } = useWallet();
   const [menuOpen, setMenuOpen] = useState(false);
-  const initials = account.owner
+  const initials = (you?.name ?? account.owner)
     .split(" ")
     .map((p) => p[0])
     .join("")
     .slice(0, 2);
+
+  async function logout() {
+    await fetch("/api/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
 
   return (
     <div className="aw">
@@ -87,7 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <i />
           </div>
           <p>
-            {money(account.balanceUsd)} / $500.00 limit
+            {money(you.balanceUsd)} P2P · demo
           </p>
           <button type="button" className="aw-btn">
             Upgrade
@@ -124,13 +130,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/settings" className="aw-user">
               <span className="aw-user-av">{initials}</span>
               <span>
-                <strong>{account.owner}</strong>
-                <em>Owner</em>
+                <strong>{you.name}</strong>
+                <em>{you.handle}</em>
               </span>
             </Link>
+            <button type="button" className="aw-btn" onClick={() => void logout()}>
+              Log out
+            </button>
           </div>
         </header>
-        <main className="aw-main">{children}</main>
+        <main className="aw-main">
+          <DemoBanner />
+          {children}
+        </main>
       </div>
     </div>
   );

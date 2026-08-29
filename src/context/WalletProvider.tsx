@@ -4,12 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 import {
-  YOU_HANDLE,
   accountSeed,
   agentSeed,
   apiSeed,
@@ -24,7 +24,6 @@ import {
 } from "@/data/wallets";
 import { clockNow, round2 } from "@/lib/money";
 import { evaluatePolicy } from "@/lib/policy";
-import { applySend } from "@/lib/send";
 
 function cloneAgents(): Agent[] {
   return agentSeed.map((a) => ({ ...a, allowlist: [...a.allowlist] }));
@@ -41,11 +40,15 @@ type Store = {
   you: Person;
   people: Person[];
   transfers: Transfer[];
+  ledgerReady: boolean;
+  ledgerError: string;
+  refreshLedger: () => Promise<void>;
   sendToPerson: (input: {
     toHandle: string;
     amount: number;
     memo: string;
-  }) => SendResult;
+    idempotencyKey: string;
+  }) => Promise<SendResult>;
   account: Account;
   agents: Agent[];
   payments: Payment[];
@@ -76,29 +79,67 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     peopleSeed.map((p) => ({ ...p })),
   );
   const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [ledgerReady, setLedgerReady] = useState(false);
+  const [ledgerError, setLedgerError] = useState("");
   const [account, setAccount] = useState<Account>({ ...accountSeed });
   const [agents, setAgents] = useState<Agent[]>(cloneAgents);
   const [payments, setPayments] = useState<Payment[]>([...paymentSeed]);
   const apis = apiSeed;
-  const you = people.find((p) => p.handle === YOU_HANDLE) ?? people[0]!;
+  const you = people.find((p) => p.handle === account.handle) ?? people[0]!;
+
+  const refreshLedger = useCallback(async () => {
+    const res = await fetch("/api/me");
+    const data = (await res.json()) as {
+      ok: boolean;
+      reason?: string;
+      you?: Person;
+      people?: Person[];
+      transfers?: Transfer[];
+    };
+    if (!data.ok || !data.you || !data.people) {
+      setLedgerError(data.reason ?? "Ledger unavailable.");
+      setLedgerReady(false);
+      return;
+    }
+    setLedgerError("");
+    setPeople(data.people);
+    setTransfers(data.transfers ?? []);
+    setAccount((acc) => ({
+      ...acc,
+      owner: data.you!.name,
+      firstName: data.you!.name.split(" ")[0] ?? data.you!.name,
+      handle: data.you!.handle,
+    }));
+    setLedgerReady(true);
+  }, []);
+
+  useEffect(() => {
+    void refreshLedger();
+  }, [refreshLedger]);
 
   const sendToPerson = useCallback(
-    (input: { toHandle: string; amount: number; memo: string }): SendResult => {
-      const result = applySend(people, YOU_HANDLE, input.toHandle, input.amount);
-      if (!result.ok) return result;
-      const entry: Transfer = {
-        id: `tx-${Date.now()}`,
-        at: clockNow(),
-        fromHandle: YOU_HANDLE,
-        toHandle: input.toHandle.trim().toLowerCase(),
-        amountUsd: result.amount,
-        memo: input.memo.trim() || "—",
-      };
-      setPeople(result.people);
-      setTransfers((list) => [entry, ...list]);
+    async (input: {
+      toHandle: string;
+      amount: number;
+      memo: string;
+      idempotencyKey: string;
+    }): Promise<SendResult> => {
+      const res = await fetch("/api/transfers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toHandle: input.toHandle,
+          amount: input.amount,
+          memo: input.memo,
+          idempotencyKey: input.idempotencyKey,
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; reason?: string };
+      if (!data.ok) return { ok: false, reason: data.reason ?? "Send failed." };
+      await refreshLedger();
       return { ok: true };
     },
-    [people],
+    [refreshLedger],
   );
 
   const agentById = useCallback(
@@ -267,6 +308,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       you,
       people,
       transfers,
+      ledgerReady,
+      ledgerError,
+      refreshLedger,
       sendToPerson,
       account,
       agents,
@@ -286,6 +330,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       you,
       people,
       transfers,
+      ledgerReady,
+      ledgerError,
+      refreshLedger,
       sendToPerson,
       account,
       agents,

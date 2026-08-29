@@ -68,26 +68,26 @@ export type LabStep = {
   detail: string;
 };
 
-export const YOU_HANDLE = "nitya.pay";
+export const YOU_HANDLE = "sunik.pay";
 
 export const peopleSeed: Person[] = [
   {
-    id: "nitya",
-    name: "Nitya Suon",
+    id: "sunik",
+    name: "Sunik Codes",
     handle: YOU_HANDLE,
     balanceUsd: 82.4,
   },
   {
-    id: "maya",
-    name: "Maya Chen",
-    handle: "maya.pay",
+    id: "midas",
+    name: "Midas Wang",
+    handle: "midas.pay",
     balanceUsd: 24,
   },
 ];
 
 export const accountSeed: Account = {
-  owner: "Nitya Suon",
-  firstName: "Nitya",
+  owner: "Sunik Codes",
+  firstName: "Sunik",
   handle: YOU_HANDLE,
   balanceUsd: 248.2,
   spentUsd: 31.82,

@@ -1,39 +1,61 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { YOU_HANDLE } from "@/data/wallets";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useWallet } from "@/context/WalletProvider";
 import { money } from "@/lib/money";
 
 export function Send() {
-  const { you, people, transfers, sendToPerson } = useWallet();
-  const them = people.find((p) => p.handle !== YOU_HANDLE);
-  const [to, setTo] = useState(them?.handle ?? "");
+  const { you, people, transfers, sendToPerson, ledgerReady, ledgerError } =
+    useWallet();
+  const them = people.find((p) => p.handle !== you.handle);
+  const [to, setTo] = useState("");
   const [amount, setAmount] = useState("5.00");
   const [memo, setMemo] = useState("coffee");
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+  const keyRef = useRef(crypto.randomUUID());
+
+  useEffect(() => {
+    const other = people.find((p) => p.handle !== you.handle);
+    if (other) setTo(other.handle);
+  }, [you.handle, people]);
 
   const preview = useMemo(() => Number.parseFloat(amount) || 0, [amount]);
   const recipient = people.find((p) => p.handle === to.trim().toLowerCase());
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    const result = sendToPerson({
-      toHandle: to,
-      amount: preview,
-      memo,
-    });
-    if (!result.ok) setError(result.reason);
+    setPending(true);
+    try {
+      const result = await sendToPerson({
+        toHandle: to,
+        amount: preview,
+        memo,
+        idempotencyKey: keyRef.current,
+      });
+      if (!result.ok) {
+        setError(result.reason);
+        return;
+      }
+      keyRef.current = crypto.randomUUID();
+    } catch {
+      setError("Could not reach the ledger.");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
     <section className="aw-page">
       <h1 className="aw-h1">Send</h1>
       <p className="aw-sub">
-        Person to person. Balances update in the browser — no agents, no ledger
-        yet.
+        Person to person. Fake money on a Postgres ledger — refresh keeps the
+        balance.
       </p>
+      {ledgerError ? (
+        <p style={{ fontWeight: 650, color: "var(--bad)" }}>{ledgerError}</p>
+      ) : null}
 
       <div className="aw-ov-stats" style={{ marginTop: 18 }}>
         <article className="aw-ov-stat">
@@ -84,7 +106,12 @@ export function Send() {
             {error}
           </p>
         ) : null}
-        <button type="submit" className="aw-btn primary" style={{ marginTop: 16 }}>
+        <button
+          type="submit"
+          className="aw-btn primary"
+          style={{ marginTop: 16 }}
+          disabled={pending || !ledgerReady}
+        >
           Send {preview > 0 ? money(preview) : ""}{" "}
           {recipient ? `to ${recipient.handle}` : ""}
         </button>
@@ -105,7 +132,7 @@ export function Send() {
                 </span>
               </span>
               <b className="amt">{money(tx.amountUsd)}</b>
-              <em className="ok">✓ Sent</em>
+              <em className="ok">✓ Settled</em>
             </li>
           ))}
         </ul>

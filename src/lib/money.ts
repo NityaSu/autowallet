@@ -10,6 +10,18 @@ export function clockNow() {
   return new Date().toLocaleTimeString("en-GB", { hour12: false });
 }
 
+export function formatTxTime(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 export function splitName(full: string) {
   const i = full.trim().indexOf(" ");
   if (i === -1) return { first: full, last: "" };

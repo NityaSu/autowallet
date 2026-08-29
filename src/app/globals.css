@@ -805,11 +805,19 @@ button.aw-card {
   color: var(--muted);
 }
 
-.aw-ov-stat em.is-up {
-  color: var(--ok);
+.aw-ov-stat em.is-up,
+.aw-ov-stat em.is-down {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+.aw-ov-stat em.is-up {
+  color: var(--ok);
+}
+
+.aw-ov-stat em.is-down {
+  color: var(--bad);
 }
 
 .aw-ov-ico {

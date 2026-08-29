@@ -16,6 +16,7 @@ export type Transfer = {
   toHandle: string;
   amountUsd: number;
   memo: string;
+  status?: string;
 };
 
 export type Account = {

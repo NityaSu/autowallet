@@ -9,17 +9,19 @@ import {
   FileText,
   Shield,
   Target,
+  TrendingDown,
   TrendingUp,
   Wallet,
 } from "lucide-react";
 import { SpendBar } from "@/components/SpendBar";
 import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
-import { greeting, money } from "@/lib/money";
+import { formatTxTime, greeting, money } from "@/lib/money";
+import { overviewFromTransfers } from "@/lib/transfer-stats";
 
 export function Overview() {
   const router = useRouter();
-  const { account, agents, payments } = useWallet();
+  const { account, agents, transfers } = useWallet();
   const [hello, setHello] = useState("Good afternoon");
 
   useEffect(() => {
@@ -27,40 +29,19 @@ export function Overview() {
   }, []);
 
   const featured = agents.find((a) => a.id === "research") ?? agents[0];
-  const recent = payments.slice(0, 6);
-  const successRate = useMemo(() => {
-    if (!payments.length) return 100;
-    const ok = payments.filter((p) => p.status === "settled").length;
-    return Math.round((ok / payments.length) * 1000) / 10;
-  }, [payments]);
-
-  const spendSlices = useMemo(() => {
-    const settled = payments.filter((p) => p.status === "settled");
-    const total = settled.reduce((s, p) => s + p.amountUsd, 0) || 1;
-    const api = settled
-      .filter((p) => p.apiName === "Search API" || p.apiName === "LLM API")
-      .reduce((s, p) => s + p.amountUsd, 0);
-    const data = settled
-      .filter((p) => p.apiName === "Data API")
-      .reduce((s, p) => s + p.amountUsd, 0);
-    const other = Math.max(0, total - api - data);
-    return [
-      { label: "API Calls", pct: Math.round((api / total) * 100), color: "#fc6203" },
-      { label: "Data Services", pct: Math.round((data / total) * 100), color: "#f4b183" },
-      { label: "Other", pct: Math.round((other / total) * 100), color: "#fde0c3" },
-    ];
-  }, [payments]);
-
-  const donut = useMemo(() => {
-    const [a, b] = spendSlices;
-    const aEnd = a?.pct ?? 0;
-    const bEnd = aEnd + (b?.pct ?? 0);
-    return `conic-gradient(#fc6203 0 ${aEnd}%, #f4a574 ${aEnd}% ${bEnd}%, #fde0c3 ${bEnd}% 100%)`;
-  }, [spendSlices]);
-
-  function agentName(id: string) {
-    return agents.find((a) => a.id === id)?.name ?? "Agent";
-  }
+  const stats = useMemo(
+    () => overviewFromTransfers(transfers, account.handle),
+    [transfers, account.handle],
+  );
+  const recent = transfers.slice(0, 6);
+  const donut =
+    stats.volumeToday <= 0
+      ? "conic-gradient(#f3f4f6 0 100%)"
+      : `conic-gradient(#fc6203 0 ${stats.sentPct}%, #fde0c3 ${stats.sentPct}% 100%)`;
+  const spendSlices = [
+    { label: "Sent", pct: stats.sentPct, color: "#fc6203" },
+    { label: "Received", pct: stats.receivedPct, color: "#fde0c3" },
+  ];
 
   if (!featured) return null;
 
@@ -97,10 +78,22 @@ export function Overview() {
         <article className="aw-ov-stat">
           <div>
             <span>Spent Today</span>
-            <strong className="is-orange">{money(account.spentUsd)}</strong>
-            <em className="is-up">
-              <TrendingUp size={12} /> +18.6% vs yesterday
-            </em>
+            <strong className="is-orange">{money(stats.spentToday)}</strong>
+            {stats.spentDeltaPct === null ? (
+              <em>
+                {stats.spentToday > 0 ? "Outgoing today" : "No outgoing sends"}
+              </em>
+            ) : (
+              <em className={stats.spentDeltaPct >= 0 ? "is-up" : "is-down"}>
+                {stats.spentDeltaPct >= 0 ? (
+                  <TrendingUp size={12} />
+                ) : (
+                  <TrendingDown size={12} />
+                )}
+                {stats.spentDeltaPct >= 0 ? "+" : ""}
+                {stats.spentDeltaPct}% vs yesterday
+              </em>
+            )}
           </div>
           <i className="aw-ov-ico">
             <TrendingUp size={18} />
@@ -109,8 +102,8 @@ export function Overview() {
         <article className="aw-ov-stat">
           <div>
             <span>Total Payments</span>
-            <strong>{account.requests.toLocaleString()}</strong>
-            <em>Across all agents</em>
+            <strong>{stats.totalPayments.toLocaleString()}</strong>
+            <em>P2P sends</em>
           </div>
           <i className="aw-ov-ico">
             <Target size={18} />
@@ -119,9 +112,11 @@ export function Overview() {
         <article className="aw-ov-stat">
           <div>
             <span>Successful Rate</span>
-            <strong className="is-orange">{successRate}%</strong>
-            <em className="is-up">
-              <TrendingUp size={12} /> +2.1% vs last week
+            <strong className="is-orange">{stats.successRate}%</strong>
+            <em>
+              {stats.totalPayments === 0
+                ? "No sends yet"
+                : "Settled P2P transfers"}
             </em>
           </div>
           <i className="aw-ov-ico is-ok">
@@ -192,44 +187,51 @@ export function Overview() {
             <thead>
               <tr>
                 <th>Time</th>
-                <th>Agent</th>
+                <th>From</th>
                 <th>To</th>
                 <th>Amount</th>
+                <th>Memo</th>
                 <th>Status</th>
-                <th>Method</th>
               </tr>
             </thead>
             <tbody>
-              {recent.map((tx) => (
-                <tr key={tx.id}>
-                  <td className="aw-muted">{tx.at}</td>
-                  <td>{agentName(tx.agentId)}</td>
-                  <td className="aw-handle">{tx.host}</td>
-                  <td>{money(tx.amountUsd)}</td>
-                  <td>
-                    <em
-                      className={
-                        tx.status === "settled" ? "aw-pill ok" : "aw-pill bad"
-                      }
-                    >
-                      {tx.status === "settled" ? "Settled" : "Blocked"}
-                    </em>
+              {recent.length === 0 ? (
+                <tr>
+                  <td className="aw-muted" colSpan={6}>
+                    No person-to-person sends yet.
                   </td>
-                  <td className="aw-muted">x402 / USDC</td>
                 </tr>
-              ))}
+              ) : (
+                recent.map((tx) => {
+                  const settled = (tx.status ?? "settled") === "settled";
+                  return (
+                    <tr key={tx.id}>
+                      <td className="aw-muted">{formatTxTime(tx.at)}</td>
+                      <td className="aw-handle">{tx.fromHandle}</td>
+                      <td className="aw-handle">{tx.toHandle}</td>
+                      <td>{money(tx.amountUsd)}</td>
+                      <td className="aw-muted">{tx.memo}</td>
+                      <td>
+                        <em className={settled ? "aw-pill ok" : "aw-pill bad"}>
+                          {settled ? "Settled" : "Blocked"}
+                        </em>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </article>
 
         <div className="aw-ov-side">
           <article className="aw-card">
-            <h2>Today&apos;s Spending</h2>
+            <h2>Today&apos;s activity</h2>
             <div className="aw-ov-donut-wrap">
               <div className="aw-ov-donut" style={{ background: donut }}>
                 <div className="aw-ov-donut-hole">
-                  <b>{money(featured.spentTodayUsd)}</b>
-                  <span>of {money(featured.dailyCapUsd)}</span>
+                  <b>{money(stats.volumeToday)}</b>
+                  <span>sent + received</span>
                 </div>
               </div>
               <ul>

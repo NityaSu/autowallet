@@ -9,17 +9,22 @@ import {
   type ReactNode,
 } from "react";
 import {
+  YOU_HANDLE,
   accountSeed,
   agentSeed,
   apiSeed,
   paymentSeed,
+  peopleSeed,
   type Account,
   type Agent,
   type PaidApi,
   type Payment,
+  type Person,
+  type Transfer,
 } from "@/data/wallets";
 import { clockNow, round2 } from "@/lib/money";
 import { evaluatePolicy } from "@/lib/policy";
+import { applySend } from "@/lib/send";
 
 function cloneAgents(): Agent[] {
   return agentSeed.map((a) => ({ ...a, allowlist: [...a.allowlist] }));
@@ -30,7 +35,17 @@ type PayResult = {
   reason: string;
 };
 
+type SendResult = { ok: true } | { ok: false; reason: string };
+
 type Store = {
+  you: Person;
+  people: Person[];
+  transfers: Transfer[];
+  sendToPerson: (input: {
+    toHandle: string;
+    amount: number;
+    memo: string;
+  }) => SendResult;
   account: Account;
   agents: Agent[];
   payments: Payment[];
@@ -57,10 +72,34 @@ type Store = {
 const WalletContext = createContext<Store | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
+  const [people, setPeople] = useState<Person[]>(() =>
+    peopleSeed.map((p) => ({ ...p })),
+  );
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [account, setAccount] = useState<Account>({ ...accountSeed });
   const [agents, setAgents] = useState<Agent[]>(cloneAgents);
   const [payments, setPayments] = useState<Payment[]>([...paymentSeed]);
   const apis = apiSeed;
+  const you = people.find((p) => p.handle === YOU_HANDLE) ?? people[0]!;
+
+  const sendToPerson = useCallback(
+    (input: { toHandle: string; amount: number; memo: string }): SendResult => {
+      const result = applySend(people, YOU_HANDLE, input.toHandle, input.amount);
+      if (!result.ok) return result;
+      const entry: Transfer = {
+        id: `tx-${Date.now()}`,
+        at: clockNow(),
+        fromHandle: YOU_HANDLE,
+        toHandle: input.toHandle.trim().toLowerCase(),
+        amountUsd: result.amount,
+        memo: input.memo.trim() || "—",
+      };
+      setPeople(result.people);
+      setTransfers((list) => [entry, ...list]);
+      return { ok: true };
+    },
+    [people],
+  );
 
   const agentById = useCallback(
     (id: string) => agents.find((a) => a.id === id),
@@ -225,6 +264,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Store>(
     () => ({
+      you,
+      people,
+      transfers,
+      sendToPerson,
       account,
       agents,
       payments,
@@ -240,6 +283,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       attemptPay,
     }),
     [
+      you,
+      people,
+      transfers,
+      sendToPerson,
       account,
       agents,
       payments,

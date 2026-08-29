@@ -2,6 +2,22 @@ import type { AgentStatus } from "@/lib/policy";
 
 export type PayStatus = "settled" | "blocked";
 
+export type Person = {
+  id: string;
+  name: string;
+  handle: string;
+  balanceUsd: number;
+};
+
+export type Transfer = {
+  id: string;
+  at: string;
+  fromHandle: string;
+  toHandle: string;
+  amountUsd: number;
+  memo: string;
+};
+
 export type Account = {
   owner: string;
   firstName: string;
@@ -52,10 +68,27 @@ export type LabStep = {
   detail: string;
 };
 
+export const YOU_HANDLE = "nitya.pay";
+
+export const peopleSeed: Person[] = [
+  {
+    id: "nitya",
+    name: "Nitya Suon",
+    handle: YOU_HANDLE,
+    balanceUsd: 82.4,
+  },
+  {
+    id: "maya",
+    name: "Maya Chen",
+    handle: "maya.pay",
+    balanceUsd: 24,
+  },
+];
+
 export const accountSeed: Account = {
   owner: "Nitya Suon",
   firstName: "Nitya",
-  handle: "nitya.pay",
+  handle: YOU_HANDLE,
   balanceUsd: 248.2,
   spentUsd: 31.82,
   requests: 12481,

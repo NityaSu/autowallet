@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  ArrowLeftRight,
   Bell,
   Bot,
   Globe,
@@ -20,6 +21,7 @@ import { money } from "@/lib/money";
 
 const links = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/send", label: "Send", icon: ArrowLeftRight },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/wallets", label: "Wallets", icon: Wallet },
   { href: "/activity", label: "Activity", icon: Activity },
@@ -54,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           className="aw-brand"
           onClick={() => setMenuOpen(false)}
         >
-          <CloudMark width={42} height={28} />
+          <CloudMark width={38} height={25} />
           <span>
             <strong>AutoWallet</strong>
             <em>Virtual wallets</em>

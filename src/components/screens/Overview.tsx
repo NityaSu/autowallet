@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeftRight,
   BookOpen,
   Bot,
   FileText,
-  Plus,
   Shield,
   Target,
   TrendingUp,
@@ -69,17 +69,17 @@ export function Overview() {
       <div className="aw-ov-head">
         <div>
           <h1 className="aw-hello">
-            {hello}, {account.firstName} 👋
+            {hello}, {account.firstName} !
           </h1>
           <p className="aw-sub">Here&apos;s what&apos;s happening with AutoWallet today.</p>
         </div>
         <button
           type="button"
           className="aw-btn primary aw-ov-cta"
-          onClick={() => router.push("/wallets")}
+          onClick={() => router.push("/send")}
         >
-          <Plus size={16} />
-          Create Agent Wallet
+          <ArrowLeftRight size={16} />
+          Send money
         </button>
       </div>
 

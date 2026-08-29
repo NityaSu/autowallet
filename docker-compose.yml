@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: autowallet
+      POSTGRES_PASSWORD: autowallet
+      POSTGRES_DB: autowallet
+    ports:
+      - "5432:5432"
+    volumes:
+      - aw-pg:/var/lib/postgresql/data
+
+volumes:
+  aw-pg:

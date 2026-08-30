@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useWallet } from "@/context/WalletProvider";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
@@ -24,15 +25,20 @@ export function Activity() {
         <ul className={tw.pay}>
           {transfers.map((tx) => (
             <li key={tx.id} className={tw.payItem}>
-              <span>
-                {tx.fromHandle} → {tx.toHandle}
-                <span className={tw.muted}>
-                  {" "}
-                  · {tx.memo} · {tx.at}
+              <Link
+                href={`/activity/${tx.id}`}
+                className="contents text-foreground no-underline"
+              >
+                <span>
+                  {tx.fromHandle} → {tx.toHandle}
+                  <span className={tw.muted}>
+                    {" "}
+                    · {tx.memo} · {tx.at}
+                  </span>
                 </span>
-              </span>
-              <b className={tw.amt}>{money(tx.amountUsd)}</b>
-              <em className={tw.ok}>✓ Sent</em>
+                <b className={tw.amt}>{money(tx.amountUsd)}</b>
+                <em className={tw.ok}>✓ Sent</em>
+              </Link>
             </li>
           ))}
         </ul>

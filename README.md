@@ -22,9 +22,7 @@ Demo logins (password `demo`):
 - `sunik.pay` — $82.40 (Sunik Codes)
 - `midas.pay` — $24.00 (Midas Wang)
 
-Send from Sunik to Midas, then hard-refresh: the ledger keeps the transfer. Log out and sign in as Midas to see the credit.
-
-Or create an account on `/login` (handle like `nina.pay`). New accounts start with **$50.00** fake money.
+Send from Sunik to Midas, then hard-refresh: the ledger keeps the transfer. You can also create an account from the login page.
 
 ## Deploy (Vercel)
 

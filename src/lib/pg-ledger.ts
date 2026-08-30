@@ -148,6 +148,34 @@ export async function listTransfersForUser(userId: string) {
   }));
 }
 
+export async function findTransferForUser(transferId: string, userId: string) {
+  const db = getDb();
+  const [row] = await db
+    .select()
+    .from(transfers)
+    .where(eq(transfers.id, transferId))
+    .limit(1);
+  if (!row) return null;
+  if (row.fromUserId !== userId && row.toUserId !== userId) return null;
+
+  const [from, to] = await Promise.all([
+    findUserById(row.fromUserId),
+    findUserById(row.toUserId),
+  ]);
+
+  return {
+    id: row.id,
+    fromHandle: from?.handle ?? "unknown",
+    fromName: from?.name ?? "Unknown",
+    toHandle: to?.handle ?? "unknown",
+    toName: to?.name ?? "Unknown",
+    amountUsd: centsToUsd(row.amountCents),
+    memo: row.memo,
+    at: new Date(row.createdAt).toISOString(),
+    status: row.status,
+  };
+}
+
 export async function findUserByHandle(handle: string) {
   const db = getDb();
   const [row] = await db

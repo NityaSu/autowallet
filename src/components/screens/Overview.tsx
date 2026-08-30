@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Activity,
@@ -190,7 +191,7 @@ export function Overview() {
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr>
-                {["Time", "From", "To", "Amount", "Memo", "Status"].map((h) => (
+                {["Time", "From", "To", "Amount", "Memo", "Status", ""].map((h) => (
                   <th
                     key={h}
                     className="pr-2 pb-2.5 text-left text-[11px] font-semibold text-muted"
@@ -203,7 +204,7 @@ export function Overview() {
             <tbody>
               {recent.length === 0 ? (
                 <tr>
-                  <td className={cx(tw.muted, "border-t border-line py-2.5 pr-2")} colSpan={6}>
+                  <td className={cx(tw.muted, "border-t border-line py-2.5 pr-2")} colSpan={7}>
                     No person-to-person sends yet.
                   </td>
                 </tr>
@@ -231,6 +232,11 @@ export function Overview() {
                         <em className={settled ? tw.pillOk : tw.pillBad}>
                           {settled ? "Settled" : "Blocked"}
                         </em>
+                      </td>
+                      <td className="border-t border-line py-2.5 pr-2">
+                        <Link href={`/activity/${tx.id}`} className={tw.textBtn}>
+                          Receipt
+                        </Link>
                       </td>
                     </tr>
                   );

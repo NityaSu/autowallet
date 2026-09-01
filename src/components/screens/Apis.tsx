@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { labSteps } from "@/data/wallets";
 import { useWallet } from "@/context/WalletProvider";
@@ -22,6 +23,7 @@ export function Apis() {
   const [denied, setDenied] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const [verdict, setVerdict] = useState("");
+  const [lastPaymentId, setLastPaymentId] = useState("");
 
   const agent = useMemo(
     () => agents.find((a) => a.id === agentId) ?? agents[0],
@@ -39,6 +41,7 @@ export function Apis() {
     setStep(0);
     setLog([]);
     setVerdict("");
+    setLastPaymentId("");
 
     const lines: string[] = [];
     const push = (line: string) => {
@@ -55,9 +58,10 @@ export function Apis() {
     push(`interceptor caught 402 · ${agent.handle}`);
     setStep(3);
     await sleep(300);
-    const result = attemptPay(agent.id, api.id);
+    const result = await attemptPay(agent.id, api.id);
     setStep(4);
     push(result.ok ? `policy ALLOW · ${result.reason}` : `policy DENY · ${result.reason}`);
+    if (result.paymentId) setLastPaymentId(result.paymentId);
     await sleep(380);
     if (!result.ok) {
       setDenied(true);
@@ -150,6 +154,11 @@ export function Apis() {
               {denied ? "Blocked" : step === 7 ? "Settled" : "Checking"} ·{" "}
               {verdict}
             </p>
+          ) : null}
+          {lastPaymentId ? (
+            <Link href={`/payments/${lastPaymentId}`} className={cx(tw.textBtn, "mt-2 inline-block")}>
+              View payment receipt →
+            </Link>
           ) : null}
         </article>
         <ol className="m-0 grid list-none gap-2 p-0">

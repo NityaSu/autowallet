@@ -77,7 +77,7 @@ export function Send() {
             <div>
               <span className="block text-xs font-semibold text-muted">Them</span>
               <strong className="mt-2 mb-1.5 block text-[26px] tracking-tight">
-                {money(recipient.balanceUsd)}
+                —
               </strong>
               <em className="text-xs not-italic text-muted">
                 {recipient.name} · {recipient.handle}

@@ -27,11 +27,10 @@ const links = [
   { href: "/send", label: "Send", icon: ArrowLeftRight, inNav: true },
   { href: "/activity", label: "Activity", icon: Activity, inNav: true },
   { href: "/settings", label: "Settings", icon: Settings, inNav: true },
-  // Mock agent UI — keep routes, hide from the demo nav.
-  { href: "/agents", label: "Agents", icon: Bot, inNav: false },
-  { href: "/wallets", label: "Wallets", icon: Wallet, inNav: false },
-  { href: "/policies", label: "Policies", icon: Shield, inNav: false },
-  { href: "/apis", label: "API Endpoints", icon: Globe, inNav: false },
+  { href: "/agents", label: "Agents", icon: Bot, inNav: true },
+  { href: "/wallets", label: "Wallets", icon: Wallet, inNav: true },
+  { href: "/policies", label: "Policies", icon: Shield, inNav: true },
+  { href: "/apis", label: "API Endpoints", icon: Globe, inNav: true },
 ] as const;
 
 function isOn(href: string, path: string) {

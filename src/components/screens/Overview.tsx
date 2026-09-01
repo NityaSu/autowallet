@@ -159,8 +159,8 @@ export function Overview() {
                 <p className={tw.handle}>{person.handle}</p>
               </div>
               <div>
-                <span className="block text-[11px] text-muted">Balance</span>
-                <b>{money(person.balanceUsd)}</b>
+                <span className="block text-[11px] text-muted">Handle</span>
+                <b className="font-mono text-sm">{person.handle}</b>
               </div>
             </div>
           ))}

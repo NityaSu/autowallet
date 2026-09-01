@@ -16,7 +16,7 @@ export function Policies() {
   function addHost(e: FormEvent) {
     e.preventDefault();
     if (!selected) return;
-    addAllowHost(selected.id, newHost);
+    void addAllowHost(selected.id, newHost);
     setNewHost("");
   }
 
@@ -49,7 +49,7 @@ export function Policies() {
             className="w-full"
             value={selected.dailyCapUsd}
             onChange={(e) =>
-              setCaps(selected.id, { dailyCapUsd: Number(e.target.value) })
+              void setCaps(selected.id, { dailyCapUsd: Number(e.target.value) })
             }
             type="range"
             min={0.5}
@@ -63,7 +63,7 @@ export function Policies() {
             className="w-full"
             value={selected.perRequestMaxUsd}
             onChange={(e) =>
-              setCaps(selected.id, {
+              void setCaps(selected.id, {
                 perRequestMaxUsd: Number(e.target.value),
               })
             }
@@ -82,7 +82,7 @@ export function Policies() {
               <button
                 type="button"
                 className="cursor-pointer border-0 bg-transparent text-xs text-muted"
-                onClick={() => dropAllowHost(selected.id, host)}
+                onClick={() => void dropAllowHost(selected.id, host)}
               >
                 remove
               </button>

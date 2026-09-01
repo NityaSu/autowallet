@@ -18,13 +18,14 @@ export function Wallets() {
 
   function create(e: FormEvent) {
     e.preventDefault();
-    const next = issueAgent({
+    void issueAgent({
       name,
       prefix,
       dailyCapUsd: cap,
       perRequestMaxUsd: max,
+    }).then((next) => {
+      if (next) setOpen(false);
     });
-    if (next) setOpen(false);
   }
 
   return (
@@ -127,7 +128,7 @@ export function Wallets() {
               <button
                 type="button"
                 className={tw.btn}
-                onClick={() => fundAgent(agent.id, 10)}
+                onClick={() => void fundAgent(agent.id, 10)}
               >
                 Fund +$10
               </button>

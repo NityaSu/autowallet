@@ -69,14 +69,14 @@ export function AgentDetail({ agentId }: { agentId: string }) {
             <button
               type="button"
               className={tw.btnPrimary}
-              onClick={() => fundAgent(agent.id, 10)}
+              onClick={() => void fundAgent(agent.id, 10)}
             >
               Fund +$10
             </button>
             <button
               type="button"
               className={tw.btn}
-              onClick={() => toggleAgent(agent.id)}
+              onClick={() => void toggleAgent(agent.id)}
             >
               {agent.status === "active" ? "Pause agent" : "Resume agent"}
             </button>
@@ -113,17 +113,24 @@ export function AgentDetail({ agentId }: { agentId: string }) {
 
       <h2 className={tw.h2}>Payment Activity</h2>
       <ul className={tw.pay}>
-        {activity.map((tx) => (
-          <li key={tx.id} className={tw.payItem}>
-            <span>
-              {money(tx.amountUsd)} · {tx.apiName}
-            </span>
-            <span className={tw.muted}>{tx.at}</span>
-            <em className={tx.status === "settled" ? tw.ok : tw.bad}>
-              {tx.status === "settled" ? "✓ Settled" : "✕ Blocked"}
-            </em>
-          </li>
-        ))}
+        {activity.length === 0 ? (
+          <li className={cx(tw.muted, tw.payItem)}>No agent payments yet.</li>
+        ) : (
+          activity.map((tx) => (
+            <li key={tx.id} className={tw.payItem}>
+              <span>
+                {money(tx.amountUsd)} · {tx.apiName}
+              </span>
+              <span className={tw.muted}>{tx.at}</span>
+              <em className={tx.status === "settled" ? tw.ok : tw.bad}>
+                {tx.status === "settled" ? "✓ Settled" : "✕ Blocked"}
+              </em>
+              <Link href={`/payments/${tx.id}`} className={tw.textBtn}>
+                Receipt
+              </Link>
+            </li>
+          ))
+        )}
       </ul>
     </section>
   );

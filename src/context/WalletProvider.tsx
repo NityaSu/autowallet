@@ -11,10 +11,6 @@ import {
 } from "react";
 import {
   accountSeed,
-  agentSeed,
-  apiSeed,
-  paymentSeed,
-  peopleSeed,
   type Account,
   type Agent,
   type PaidApi,
@@ -22,23 +18,24 @@ import {
   type Person,
   type Transfer,
 } from "@/data/wallets";
-import { clockNow, round2 } from "@/lib/money";
-import { evaluatePolicy } from "@/lib/policy";
 
-function cloneAgents(): Agent[] {
-  return agentSeed.map((a) => ({ ...a, allowlist: [...a.allowlist] }));
-}
+type Recipient = {
+  id: string;
+  name: string;
+  handle: string;
+};
 
 type PayResult = {
   ok: boolean;
   reason: string;
+  paymentId?: string;
 };
 
 type SendResult = { ok: true } | { ok: false; reason: string };
 
 type Store = {
   you: Person;
-  people: Person[];
+  people: Recipient[];
   transfers: Transfer[];
   ledgerReady: boolean;
   ledgerError: string;
@@ -55,37 +52,44 @@ type Store = {
   apis: PaidApi[];
   agentById: (id: string) => Agent | undefined;
   paymentsFor: (id: string) => Payment[];
-  toggleAgent: (id: string) => void;
-  fundAgent: (id: string, amount?: number) => void;
-  addAllowHost: (id: string, host: string) => void;
-  dropAllowHost: (id: string, host: string) => void;
+  toggleAgent: (id: string) => Promise<void>;
+  fundAgent: (id: string, amount?: number) => Promise<boolean>;
+  addAllowHost: (id: string, host: string) => Promise<void>;
+  dropAllowHost: (id: string, host: string) => Promise<void>;
   setCaps: (
     id: string,
     next: { dailyCapUsd?: number; perRequestMaxUsd?: number },
-  ) => void;
+  ) => Promise<void>;
   issueAgent: (input: {
     name: string;
     prefix: string;
     dailyCapUsd: number;
     perRequestMaxUsd: number;
-  }) => Agent | null;
-  attemptPay: (agentId: string, apiId: string) => PayResult;
+  }) => Promise<Agent | null>;
+  attemptPay: (
+    agentId: string,
+    apiId: string,
+    idempotencyKey?: string,
+  ) => Promise<PayResult>;
 };
 
 const WalletContext = createContext<Store | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [people, setPeople] = useState<Person[]>(() =>
-    peopleSeed.map((p) => ({ ...p })),
-  );
+  const [people, setPeople] = useState<Recipient[]>([]);
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [ledgerReady, setLedgerReady] = useState(false);
   const [ledgerError, setLedgerError] = useState("");
   const [account, setAccount] = useState<Account>({ ...accountSeed });
-  const [agents, setAgents] = useState<Agent[]>(cloneAgents);
-  const [payments, setPayments] = useState<Payment[]>([...paymentSeed]);
-  const apis = apiSeed;
-  const you = people.find((p) => p.handle === account.handle) ?? people[0]!;
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [apis, setApis] = useState<PaidApi[]>([]);
+  const [you, setYou] = useState<Person>({
+    id: "",
+    name: "",
+    handle: "",
+    balanceUsd: 0,
+  });
 
   const refreshLedger = useCallback(async () => {
     const res = await fetch("/api/me");
@@ -93,17 +97,32 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       ok: boolean;
       reason?: string;
       you?: Person;
-      people?: Person[];
+      recipients?: Recipient[];
+      people?: Recipient[];
       transfers?: Transfer[];
+      agents?: Agent[];
+      payments?: Payment[];
+      apis?: PaidApi[];
     };
-    if (!data.ok || !data.you || !data.people) {
+    if (!data.ok || !data.you) {
       setLedgerError(data.reason ?? "Ledger unavailable.");
       setLedgerReady(false);
       return;
     }
     setLedgerError("");
-    setPeople(data.people);
+    setYou(data.you);
+    setPeople(data.recipients ?? data.people ?? []);
     setTransfers(data.transfers ?? []);
+    setAgents(data.agents ?? []);
+    setPayments(
+      (data.payments ?? []).map((p) => ({
+        ...p,
+        at: p.at.includes("T")
+          ? new Date(p.at).toLocaleTimeString("en-US", { hour12: false })
+          : p.at,
+      })),
+    );
+    setApis(data.apis ?? []);
     setAccount((acc) => ({
       ...acc,
       owner: data.you!.name,
@@ -153,155 +172,114 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [payments],
   );
 
-  const toggleAgent = useCallback((id: string) => {
-    setAgents((list) =>
-      list.map((a) =>
-        a.id === id
-          ? { ...a, status: a.status === "active" ? "paused" : "active" }
-          : a,
-      ),
-    );
-  }, []);
+  const toggleAgent = useCallback(
+    async (id: string) => {
+      await fetch("/api/agents", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: id, action: "toggle" }),
+      });
+      await refreshLedger();
+    },
+    [refreshLedger],
+  );
 
-  const fundAgent = useCallback((id: string, amount = 10) => {
-    setAccount((acc) => {
-      if (acc.balanceUsd < amount) return acc;
-      setAgents((list) =>
-        list.map((a) =>
-          a.id === id
-            ? {
-                ...a,
-                balanceUsd: round2(a.balanceUsd + amount),
-                fundedUsd: round2(a.fundedUsd + amount),
-              }
-            : a,
-        ),
-      );
-      return { ...acc, balanceUsd: round2(acc.balanceUsd - amount) };
-    });
-  }, []);
+  const fundAgent = useCallback(
+    async (id: string, amount = 10) => {
+      const res = await fetch(`/api/agents/${id}/fund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amountUsd: amount,
+          idempotencyKey: crypto.randomUUID(),
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean };
+      if (!data.ok) return false;
+      await refreshLedger();
+      return true;
+    },
+    [refreshLedger],
+  );
 
-  const addAllowHost = useCallback((id: string, host: string) => {
-    const clean = host.trim().toLowerCase();
-    if (!clean) return;
-    setAgents((list) =>
-      list.map((a) =>
-        a.id === id && !a.allowlist.includes(clean)
-          ? { ...a, allowlist: [...a.allowlist, clean] }
-          : a,
-      ),
-    );
-  }, []);
+  const addAllowHost = useCallback(
+    async (id: string, host: string) => {
+      await fetch("/api/agents", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: id, addHost: host }),
+      });
+      await refreshLedger();
+    },
+    [refreshLedger],
+  );
 
-  const dropAllowHost = useCallback((id: string, host: string) => {
-    setAgents((list) =>
-      list.map((a) =>
-        a.id === id
-          ? { ...a, allowlist: a.allowlist.filter((h) => h !== host) }
-          : a,
-      ),
-    );
-  }, []);
+  const dropAllowHost = useCallback(
+    async (id: string, host: string) => {
+      await fetch("/api/agents", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: id, dropHost: host }),
+      });
+      await refreshLedger();
+    },
+    [refreshLedger],
+  );
 
   const setCaps = useCallback(
-    (id: string, next: { dailyCapUsd?: number; perRequestMaxUsd?: number }) => {
-      setAgents((list) =>
-        list.map((a) => (a.id === id ? { ...a, ...next } : a)),
-      );
+    async (
+      id: string,
+      next: { dailyCapUsd?: number; perRequestMaxUsd?: number },
+    ) => {
+      await fetch("/api/agents", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: id, ...next }),
+      });
+      await refreshLedger();
     },
-    [],
+    [refreshLedger],
   );
 
   const issueAgent = useCallback(
-    (input: {
+    async (input: {
       name: string;
       prefix: string;
       dailyCapUsd: number;
       perRequestMaxUsd: number;
     }) => {
-      const prefix =
-        input.prefix.trim().toLowerCase().replace(/[^a-z0-9-]/g, "") ||
-        "agent";
-      const handle = `${prefix}.pay`;
-      if (agents.some((a) => a.handle === handle)) return null;
-      const next: Agent = {
-        id: `ag-${Date.now()}`,
-        name: input.name.trim() || "New Agent",
-        handle,
-        status: "active",
-        balanceUsd: 0,
-        fundedUsd: 0,
-        spentTodayUsd: 0,
-        dailyCapUsd: input.dailyCapUsd,
-        perRequestMaxUsd: input.perRequestMaxUsd,
-        allowlist: ["api.search.com"],
-        publicKey: `0x${Math.random().toString(16).slice(2, 6)}…${Math.random().toString(16).slice(2, 6)}`,
+      const res = await fetch("/api/agents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        agent?: Agent;
       };
-      setAgents((list) => [next, ...list]);
-      return next;
+      if (!data.ok || !data.agent) return null;
+      await refreshLedger();
+      return data.agent;
     },
-    [agents],
+    [refreshLedger],
   );
 
   const attemptPay = useCallback(
-    (agentId: string, apiId: string): PayResult => {
-      const agent = agents.find((a) => a.id === agentId);
-      const api = apis.find((item) => item.id === apiId);
-      if (!agent || !api) {
-        return { ok: false, reason: "missing agent or API" };
-      }
-
-      setAccount((acc) => ({ ...acc, requests: acc.requests + 1 }));
-
-      const decision = evaluatePolicy(agent, {
-        host: api.host,
-        priceUsd: api.priceUsd,
+    async (
+      agentId: string,
+      apiId: string,
+      idempotencyKey = crypto.randomUUID(),
+    ): Promise<PayResult> => {
+      const res = await fetch("/api/pay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId, apiId, idempotencyKey }),
       });
-
-      const record = (status: Payment["status"], reason: string) => {
-        const entry: Payment = {
-          id: `pay-${Date.now()}`,
-          at: clockNow(),
-          agentId: agent.id,
-          apiName: api.name,
-          host: api.host,
-          amountUsd: api.priceUsd,
-          status,
-          reason,
-        };
-        setPayments((list) => [entry, ...list]);
-      };
-
-      if (!decision.ok) {
-        record("blocked", decision.reason);
-        return { ok: false, reason: decision.reason };
-      }
-
-      if (agent.balanceUsd < api.priceUsd) {
-        const reason = "insufficient virtual wallet balance";
-        record("blocked", reason);
-        return { ok: false, reason };
-      }
-
-      setAgents((list) =>
-        list.map((a) =>
-          a.id === agent.id
-            ? {
-                ...a,
-                spentTodayUsd: round2(a.spentTodayUsd + api.priceUsd),
-                balanceUsd: round2(a.balanceUsd - api.priceUsd),
-              }
-            : a,
-        ),
-      );
-      setAccount((acc) => ({
-        ...acc,
-        spentUsd: round2(acc.spentUsd + api.priceUsd),
-      }));
-      record("settled", decision.reason);
-      return { ok: true, reason: decision.reason };
+      const data = (await res.json()) as PayResult;
+      await refreshLedger();
+      return data;
     },
-    [agents, apis],
+    [refreshLedger],
   );
 
   const value = useMemo<Store>(

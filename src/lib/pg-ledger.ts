@@ -115,13 +115,27 @@ export async function listPeople() {
       handle: users.handle,
       balanceCents: users.balanceCents,
     })
-    .from(users);
+    .from(users)
+    .where(eq(users.kind, "person"));
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
     handle: row.handle,
     balanceUsd: centsToUsd(row.balanceCents),
   }));
+}
+
+export async function listRecipients(excludeUserId?: string) {
+  const db = getDb();
+  const rows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      handle: users.handle,
+    })
+    .from(users)
+    .where(eq(users.kind, "person"));
+  return rows.filter((row) => row.id !== excludeUserId);
 }
 
 export async function listTransfersForUser(userId: string) {
@@ -211,6 +225,7 @@ export async function createUser(input: {
       name: shape.name,
       passwordHash: bcrypt.hashSync(shape.password, 10),
       balanceCents: SIGNUP_BALANCE_CENTS,
+      kind: "person",
     });
   } catch {
     return { ok: false as const, reason: "That handle is taken." };

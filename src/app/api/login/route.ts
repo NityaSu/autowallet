@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { ensureDb } from "@/db";
 import { findUserByHandle } from "@/lib/pg-ledger";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { jsonWithSession } from "@/lib/session";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(`login:${clientIp(req)}`, 30, 15 * 60 * 1000);
+  if (!limited.ok) {
+    return NextResponse.json(
+      { ok: false, reason: "Too many attempts. Try again later." },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } },
+    );
+  }
   try {
     await ensureDb();
     const body = (await req.json()) as { handle?: string; password?: string };

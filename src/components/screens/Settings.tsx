@@ -27,9 +27,8 @@ export function Settings() {
         </div>
       </article>
       <p className={tw.note}>
-        AutoWallet is a portfolio demo. Person-to-person send is a real
-        Postgres ledger with fake money. Agent screens are still in-memory
-        mocks.
+        AutoWallet is a portfolio demo. P2P transfers and agent wallets are
+        recorded on a real Postgres ledger with fake money.
       </p>
     </section>
   );

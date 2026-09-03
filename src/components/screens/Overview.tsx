@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -23,11 +23,7 @@ import { cx } from "@/lib/tw";
 export function Overview() {
   const router = useRouter();
   const { account, people, transfers } = useWallet();
-  const [hello, setHello] = useState("Good afternoon");
-
-  useEffect(() => {
-    setHello(greeting());
-  }, []);
+  const hello = greeting();
 
   const stats = useMemo(
     () => overviewFromTransfers(transfers, account.handle),

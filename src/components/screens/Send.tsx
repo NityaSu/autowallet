@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import { useWallet } from "@/context/WalletProvider";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
@@ -11,17 +11,13 @@ export function Send() {
   const { you, people, transfers, sendToPerson, ledgerReady, ledgerError } =
     useWallet();
   const others = people.filter((p) => p.handle !== you.handle);
-  const [to, setTo] = useState("");
+  const firstOther = useMemo(() => others[0]?.handle ?? "", [others]);
+  const [to, setTo] = useState(firstOther);
   const [amount, setAmount] = useState("5.00");
   const [memo, setMemo] = useState("coffee");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const keyRef = useRef(crypto.randomUUID());
-
-  useEffect(() => {
-    const other = people.find((p) => p.handle !== you.handle);
-    if (other) setTo((current) => current || other.handle);
-  }, [you.handle, people]);
 
   const preview = useMemo(() => Number.parseFloat(amount) || 0, [amount]);
   const recipient = people.find((p) => p.handle === to.trim().toLowerCase());
@@ -96,6 +92,9 @@ export function Send() {
               value={to}
               onChange={(e) => setTo(e.target.value)}
             >
+              <option value="" disabled>
+                Select recipient
+              </option>
               {others.map((person) => (
                 <option key={person.id} value={person.handle}>
                   {person.name} · {person.handle}

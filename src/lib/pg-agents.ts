@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte } from "drizzle-orm";
 import { agentPayments, agents, getDb, transfers, users } from "@/db";
 import { getApiById, vendorHandleForApi } from "@/lib/api-vendors";
 import { centsToUsd, usdToCents } from "@/lib/cents";
@@ -46,6 +46,31 @@ export type AgentPaymentReceipt = {
   transferId: string | null;
   vendorHandle: string | null;
   vendorName: string | null;
+};
+
+export type AuditEntry = {
+  id: string;
+  at: string;
+  agentId: string;
+  agentHandle: string;
+  agentName: string;
+  apiId: string;
+  apiName: string;
+  host: string;
+  amountUsd: number;
+  status: "settled" | "blocked";
+  reason: string;
+  transferId: string | null;
+};
+
+export type AuditPage = {
+  payments: AuditEntry[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 };
 
 function todayKey() {
@@ -205,6 +230,149 @@ export async function listPaymentsForOwner(ownerUserId: string) {
       status: row.status as PaymentDto["status"],
       reason: row.reason,
     }),
+  );
+}
+
+const MAX_AUDIT_LIMIT = 100;
+const DEFAULT_AUDIT_LIMIT = 20;
+
+function auditConditions(
+  ownerUserId: string,
+  agentUserId: string,
+  range?: { from?: string; to?: string },
+) {
+  const conditions = [
+    eq(agentPayments.ownerUserId, ownerUserId),
+    eq(agentPayments.agentUserId, agentUserId),
+  ];
+  if (range?.from) {
+    conditions.push(gte(agentPayments.createdAt, new Date(range.from)));
+  }
+  if (range?.to) {
+    const toDate = new Date(range.to);
+    toDate.setHours(23, 59, 59, 999);
+    conditions.push(lte(agentPayments.createdAt, toDate));
+  }
+  return conditions;
+}
+
+async function mapAuditRows(
+  rows: (typeof agentPayments.$inferSelect)[],
+  agentUserId: string,
+): Promise<AuditEntry[]> {
+  const agent = await findUserById(agentUserId);
+  const agentName = agent?.name ?? "";
+  const agentHandle = agent?.handle ?? "";
+  return rows.map(
+    (row): AuditEntry => ({
+      id: row.id,
+      at: new Date(row.createdAt).toISOString(),
+      agentId: row.agentUserId,
+      agentHandle,
+      agentName,
+      apiId: row.apiId,
+      apiName: row.apiName,
+      host: row.host,
+      amountUsd: centsToUsd(row.amountCents),
+      status: row.status as AuditEntry["status"],
+      reason: row.reason,
+      transferId: row.transferId,
+    }),
+  );
+}
+
+export async function listAgentAudit(
+  ownerUserId: string,
+  agentUserId: string,
+  range?: { from?: string; to?: string },
+  pagination?: { page?: number; limit?: number },
+): Promise<AuditPage> {
+  const db = getDb();
+  const conditions = auditConditions(ownerUserId, agentUserId, range);
+  const where = and(...conditions);
+
+  const page = Math.max(1, pagination?.page ?? 1);
+  const limit = Math.min(MAX_AUDIT_LIMIT, Math.max(1, pagination?.limit ?? DEFAULT_AUDIT_LIMIT));
+  const offset = (page - 1) * limit;
+
+  const [rows, [{ total }]] = await Promise.all([
+    db
+      .select()
+      .from(agentPayments)
+      .where(where)
+      .orderBy(desc(agentPayments.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ total: count() })
+      .from(agentPayments)
+      .where(where),
+  ]);
+
+  const payments = await mapAuditRows(rows, agentUserId);
+  return {
+    payments,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+export async function listAgentAuditAll(
+  ownerUserId: string,
+  agentUserId: string,
+  range?: { from?: string; to?: string },
+): Promise<AuditEntry[]> {
+  const db = getDb();
+  const conditions = auditConditions(ownerUserId, agentUserId, range);
+  const rows = await db
+    .select()
+    .from(agentPayments)
+    .where(and(...conditions))
+    .orderBy(desc(agentPayments.createdAt));
+  return mapAuditRows(rows, agentUserId);
+}
+
+export function toAgentAuditCsv(entries: AuditEntry[]) {
+  const headers = [
+    "id",
+    "at",
+    "agent_id",
+    "agent_handle",
+    "agent_name",
+    "api_id",
+    "api_name",
+    "host",
+    "amount_usd",
+    "status",
+    "reason",
+    "transfer_id",
+  ];
+  const escape = (val: string) => {
+    if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+      return `"${val.replace(/"/g, '""')}"`;
+    }
+    return val;
+  };
+  const rows = entries.map((e) => [
+    e.id,
+    e.at,
+    e.agentId,
+    e.agentHandle,
+    e.agentName,
+    e.apiId,
+    e.apiName,
+    e.host,
+    e.amountUsd.toFixed(2),
+    e.status,
+    e.reason,
+    e.transferId ?? "",
+  ]);
+  return [headers.join(","), ...rows.map((r) => r.map(escape).join(","))].join(
+    "\n",
   );
 }
 

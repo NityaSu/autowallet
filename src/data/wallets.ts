@@ -63,6 +63,33 @@ export type Payment = {
   reason: string;
 };
 
+export type AuditEntry = {
+  id: string;
+  at: string;
+  agentId: string;
+  agentHandle: string;
+  agentName: string;
+  apiId: string;
+  apiName: string;
+  host: string;
+  amountUsd: number;
+  status: PayStatus;
+  reason: string;
+  transferId: string | null;
+};
+
+export type Pagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export type AuditPage = {
+  payments: AuditEntry[];
+  pagination: Pagination;
+};
+
 export type LabStep = {
   id: number;
   label: string;

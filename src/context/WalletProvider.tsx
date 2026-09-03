@@ -13,6 +13,7 @@ import {
   accountSeed,
   type Account,
   type Agent,
+  type AuditPage,
   type PaidApi,
   type Payment,
   type Person,
@@ -71,6 +72,11 @@ type Store = {
     apiId: string,
     idempotencyKey?: string,
   ) => Promise<PayResult>;
+  fetchAudit: (
+    agentId: string,
+    range?: { from?: string; to?: string },
+    pagination?: { page?: number; limit?: number },
+  ) => Promise<AuditPage>;
 };
 
 const WalletContext = createContext<Store | null>(null);
@@ -134,6 +140,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Initial data fetch: refreshLedger populates context state from the ledger API.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshLedger();
   }, [refreshLedger]);
 
@@ -282,6 +290,32 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [refreshLedger],
   );
 
+  const fetchAudit = useCallback(
+    async (
+      agentId: string,
+      range?: { from?: string; to?: string },
+      pagination?: { page?: number; limit?: number },
+    ): Promise<AuditPage> => {
+      const params = new URLSearchParams();
+      if (range?.from) params.set("from", range.from);
+      if (range?.to) params.set("to", range.to);
+      if (pagination?.page) params.set("page", String(pagination.page));
+      if (pagination?.limit) params.set("limit", String(pagination.limit));
+      const res = await fetch(`/api/agents/${agentId}/audit?${params.toString()}`);
+      const data = (await res.json()) as {
+        ok: boolean;
+        payments?: AuditPage["payments"];
+        pagination?: AuditPage["pagination"];
+        reason?: string;
+      };
+      if (!data.ok || !data.payments || !data.pagination) {
+        throw new Error(data.reason ?? "Audit unavailable.");
+      }
+      return { payments: data.payments, pagination: data.pagination };
+    },
+    [],
+  );
+
   const value = useMemo<Store>(
     () => ({
       you,
@@ -304,6 +338,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setCaps,
       issueAgent,
       attemptPay,
+      fetchAudit,
     }),
     [
       you,
@@ -326,6 +361,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setCaps,
       issueAgent,
       attemptPay,
+      fetchAudit,
     ],
   );
 

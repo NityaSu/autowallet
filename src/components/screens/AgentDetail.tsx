@@ -1,19 +1,63 @@
 "use client";
 
-import { Bot } from "lucide-react";
+import { Bot, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import { SpendBar } from "@/components/SpendBar";
 import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
+import type { AuditEntry, Pagination } from "@/data/wallets";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
+function toInputDate(d = new Date()) {
+  return d.toISOString().slice(0, 10);
+}
+
 export function AgentDetail({ agentId }: { agentId: string }) {
-  const { agentById, paymentsFor, toggleAgent, fundAgent, account } =
+  const { agentById, paymentsFor, toggleAgent, fundAgent, account, fetchAudit } =
     useWallet();
   const agent = agentById(agentId);
   const activity = agent ? paymentsFor(agent.id) : [];
+
+  const [from, setFrom] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return toInputDate(d);
+  });
+  const [to, setTo] = useState(() => toInputDate());
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [auditError, setAuditError] = useState("");
+
+  const loadAudit = async (page = 1) => {
+    if (!agent) return;
+    setLoading(true);
+    setAuditError("");
+    try {
+      const result = await fetchAudit(agent.id, { from, to }, { page, limit: 20 });
+      setAudit(result.payments);
+      setPagination(result.pagination);
+    } catch (err) {
+      setAuditError(err instanceof Error ? err.message : "Audit failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const summary = useMemo(() => {
+    const settled = audit.filter((e) => e.status === "settled");
+    const blocked = audit.filter((e) => e.status === "blocked");
+    const total = settled.reduce((sum, e) => sum + e.amountUsd, 0);
+    return {
+      count: pagination?.total ?? audit.length,
+      settledCount: settled.length,
+      blockedCount: blocked.length,
+      total,
+    };
+  }, [audit, pagination]);
 
   if (!agent) {
     return (
@@ -132,6 +176,153 @@ export function AgentDetail({ agentId }: { agentId: string }) {
           ))
         )}
       </ul>
+
+      <h2 className={tw.h2}>Audit</h2>
+      <article className={tw.card}>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className={tw.field}>
+            <span>From</span>
+            <input
+              type="date"
+              className={tw.control}
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
+          </label>
+          <label className={tw.field}>
+            <span>To</span>
+            <input
+              type="date"
+              className={tw.control}
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className={tw.btnPrimary}
+            onClick={() => void loadAudit(1)}
+            disabled={loading}
+          >
+            {loading ? "Loading…" : "Load audit"}
+          </button>
+          <a
+            href={`/api/agents/${agent.id}/audit/export?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`}
+            download={`${agent.handle}-audit.csv`}
+            className={tw.btn}
+          >
+            <Download size={16} />
+            Export CSV
+          </a>
+        </div>
+
+        {auditError ? (
+          <p className={cx(tw.bad, "mt-4")}>{auditError}</p>
+        ) : null}
+
+        <div className={cx(tw.stats, "mt-5")}>
+          <div className={tw.stat}>
+            <span className="text-xs text-muted">Total payments</span>
+            <b className="text-[15px]">{summary.count}</b>
+          </div>
+          <div className={tw.stat}>
+            <span className="text-xs text-muted">Settled (page)</span>
+            <b className="text-[15px]">{summary.settledCount}</b>
+          </div>
+          <div className={tw.stat}>
+            <span className="text-xs text-muted">Blocked (page)</span>
+            <b className="text-[15px]">{summary.blockedCount}</b>
+          </div>
+          <div className={tw.stat}>
+            <span className="text-xs text-muted">Spent (page)</span>
+            <b className="text-[15px]">{money(summary.total)}</b>
+          </div>
+        </div>
+
+        {audit.length === 0 ? (
+          <p className={cx(tw.muted, "mt-5")}>
+            No agent payments in this date range.
+          </p>
+        ) : (
+          <>
+            <div className="mt-5 overflow-hidden rounded-2xl border border-line bg-white">
+              <table className="w-full text-sm">
+                <thead className="bg-soft text-left text-xs font-semibold text-muted">
+                  <tr>
+                    <th className="px-4 py-3">Time</th>
+                    <th className="px-4 py-3">API</th>
+                    <th className="px-4 py-3">Host</th>
+                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {audit.map((entry) => (
+                    <tr
+                      key={entry.id}
+                      className="border-t border-line first:border-t-0"
+                    >
+                      <td className="px-4 py-3 font-mono text-xs">
+                        {new Date(entry.at).toLocaleString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        })}
+                      </td>
+                      <td className="px-4 py-3">{entry.apiName}</td>
+                      <td className="px-4 py-3 font-mono text-xs">{entry.host}</td>
+                      <td className={cx(tw.amt, "px-4 py-3")}>
+                        {money(entry.amountUsd)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={
+                            entry.status === "settled" ? tw.pillOk : tw.pillBad
+                          }
+                        >
+                          {entry.status === "settled" ? "Settled" : "Blocked"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted">{entry.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {pagination && pagination.totalPages > 1 ? (
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-xs text-muted">
+                  Page {pagination.page} of {pagination.totalPages} · {pagination.total} total
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className={tw.btn}
+                    disabled={pagination.page <= 1 || loading}
+                    onClick={() => void loadAudit(pagination.page - 1)}
+                  >
+                    <ChevronLeft size={16} />
+                    Prev
+                  </button>
+                  <button
+                    type="button"
+                    className={tw.btn}
+                    disabled={pagination.page >= pagination.totalPages || loading}
+                    onClick={() => void loadAudit(pagination.page + 1)}
+                  >
+                    Next
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
+      </article>
     </section>
   );
 }

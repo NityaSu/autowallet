@@ -53,6 +53,24 @@ export const agentPayments = pgTable("agent_payments", {
     .notNull(),
 });
 
+export const webhookEndpoints = pgTable(
+  "webhook_endpoints",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ownerUserId: uuid("owner_user_id")
+      .notNull()
+      .references(() => users.id),
+    url: text("url").notNull(),
+    secret: text("secret").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique("webhook_endpoints_owner_url").on(table.ownerUserId, table.url),
+  ],
+);
+
 export const transfers = pgTable(
   "transfers",
   {
@@ -78,3 +96,4 @@ export type UserRow = typeof users.$inferSelect;
 export type AgentRow = typeof agents.$inferSelect;
 export type AgentPaymentRow = typeof agentPayments.$inferSelect;
 export type TransferRow = typeof transfers.$inferSelect;
+export type WebhookEndpointRow = typeof webhookEndpoints.$inferSelect;

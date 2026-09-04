@@ -5,6 +5,7 @@ import { getApiById, vendorHandleForApi } from "@/lib/api-vendors";
 import { centsToUsd, usdToCents } from "@/lib/cents";
 import { executeTransfer, findUserByHandle, findUserById } from "@/lib/pg-ledger";
 import { evaluatePolicy, type AgentStatus } from "@/lib/policy";
+import { notifyPaymentWebhooks, type PaymentWebhookPayload } from "@/lib/pg-webhooks";
 
 export type AgentDto = {
   id: string;
@@ -547,6 +548,10 @@ export async function updateAgentPolicy(
   return { ok: true as const, agent: toAgentDto(refreshed.user, refreshed.row) };
 }
 
+function firePaymentWebhook(ownerUserId: string, payload: PaymentWebhookPayload) {
+  void notifyPaymentWebhooks(ownerUserId, payload).catch(() => {});
+}
+
 export async function attemptAgentPay(
   ownerUserId: string,
   input: { agentId?: string; apiId?: string; idempotencyKey?: string },
@@ -585,6 +590,17 @@ export async function attemptAgentPay(
       status: "blocked",
       reason: decision.reason,
     });
+    firePaymentWebhook(ownerUserId, {
+      paymentId,
+      agentId: agentUserId,
+      apiId,
+      apiName: api.name,
+      host: api.host,
+      amountCents,
+      status: "blocked",
+      reason: decision.reason,
+      transferId: null,
+    });
     return { ok: false as const, reason: decision.reason, paymentId };
   }
 
@@ -600,6 +616,17 @@ export async function attemptAgentPay(
       amountCents,
       status: "blocked",
       reason,
+    });
+    firePaymentWebhook(ownerUserId, {
+      paymentId,
+      agentId: agentUserId,
+      apiId,
+      apiName: api.name,
+      host: api.host,
+      amountCents,
+      status: "blocked",
+      reason,
+      transferId: null,
     });
     return { ok: false as const, reason, paymentId };
   }
@@ -624,6 +651,17 @@ export async function attemptAgentPay(
       status: "blocked",
       reason: transfer.reason,
     });
+    firePaymentWebhook(ownerUserId, {
+      paymentId,
+      agentId: agentUserId,
+      apiId,
+      apiName: api.name,
+      host: api.host,
+      amountCents,
+      status: "blocked",
+      reason: transfer.reason,
+      transferId: null,
+    });
     return { ok: false as const, reason: transfer.reason, paymentId };
   }
 
@@ -638,6 +676,18 @@ export async function attemptAgentPay(
     id: paymentId,
     agentUserId,
     ownerUserId,
+    apiId,
+    apiName: api.name,
+    host: api.host,
+    amountCents,
+    status: "settled",
+    reason: decision.reason,
+    transferId: transfer.transfer.id,
+  });
+
+  firePaymentWebhook(ownerUserId, {
+    paymentId,
+    agentId: agentUserId,
     apiId,
     apiName: api.name,
     host: api.host,

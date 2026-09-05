@@ -7,7 +7,14 @@ import bcrypt from "bcryptjs";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { VENDOR_SEED } from "@/lib/api-vendors";
-import { agents, agentPayments, transfers, users, webhookEndpoints } from "./schema";
+import {
+  agentApiKeys,
+  agents,
+  agentPayments,
+  transfers,
+  users,
+  webhookEndpoints,
+} from "./schema";
 
 type AppDb =
   | ReturnType<typeof drizzlePg>
@@ -113,6 +120,18 @@ async function migrateAndSeed() {
   await db.execute(sql`
     CREATE UNIQUE INDEX IF NOT EXISTS webhook_endpoints_owner_url
     ON webhook_endpoints (owner_user_id, url)
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS agent_api_keys (
+      id uuid PRIMARY KEY,
+      agent_user_id uuid NOT NULL REFERENCES users(id),
+      owner_user_id uuid NOT NULL REFERENCES users(id),
+      name text NOT NULL,
+      key_prefix text NOT NULL,
+      key_hash text NOT NULL UNIQUE,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      revoked_at timestamptz
+    )
   `);
 
   const sunikId = "11111111-1111-1111-1111-111111111111";
@@ -235,4 +254,11 @@ async function migrateAndSeed() {
   }
 }
 
-export { users, transfers, agents, agentPayments, webhookEndpoints };
+export {
+  users,
+  transfers,
+  agents,
+  agentPayments,
+  webhookEndpoints,
+  agentApiKeys,
+};

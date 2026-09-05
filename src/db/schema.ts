@@ -53,6 +53,23 @@ export const agentPayments = pgTable("agent_payments", {
     .notNull(),
 });
 
+export const agentApiKeys = pgTable("agent_api_keys", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  agentUserId: uuid("agent_user_id")
+    .notNull()
+    .references(() => users.id),
+  ownerUserId: uuid("owner_user_id")
+    .notNull()
+    .references(() => users.id),
+  name: text("name").notNull(),
+  keyPrefix: text("key_prefix").notNull(),
+  keyHash: text("key_hash").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+});
+
 export const webhookEndpoints = pgTable(
   "webhook_endpoints",
   {
@@ -97,3 +114,4 @@ export type AgentRow = typeof agents.$inferSelect;
 export type AgentPaymentRow = typeof agentPayments.$inferSelect;
 export type TransferRow = typeof transfers.$inferSelect;
 export type WebhookEndpointRow = typeof webhookEndpoints.$inferSelect;
+export type AgentApiKeyRow = typeof agentApiKeys.$inferSelect;

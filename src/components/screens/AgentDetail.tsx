@@ -183,6 +183,7 @@ export function AgentDetail({ agentId }: { agentId: string }) {
           spentTodayUsd={agent.spentTodayUsd}
           receivedTodayUsd={0}
           live={agent.status === "active"}
+          kind="agent"
         />
       </div>
 

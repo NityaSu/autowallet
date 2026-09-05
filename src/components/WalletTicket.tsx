@@ -10,6 +10,7 @@ export function WalletTicket({
   receivedTodayUsd,
   live = true,
   onManage,
+  kind = "personal",
 }: {
   owner: string;
   handle: string;
@@ -18,6 +19,7 @@ export function WalletTicket({
   receivedTodayUsd: number;
   live?: boolean;
   onManage?: () => void;
+  kind?: "personal" | "agent";
 }) {
   const { first, last } = splitName(owner);
 
@@ -61,7 +63,9 @@ export function WalletTicket({
             </div>
 
             <div className={styles.nameSection}>
-              <div className={styles.sectionLabel}>Personal wallet · Owner</div>
+              <div className={styles.sectionLabel}>
+                {kind === "agent" ? "Agent wallet" : "Personal wallet · Owner"}
+              </div>
               <div className={styles.ownerName}>
                 {first}
                 {last ? (

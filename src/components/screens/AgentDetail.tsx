@@ -2,7 +2,7 @@
 
 import { Bot, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SpendBar } from "@/components/SpendBar";
 import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
@@ -10,6 +10,13 @@ import type { AuditEntry, Pagination } from "@/data/wallets";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
+
+type AgentKey = {
+  id: string;
+  name: string;
+  hint: string;
+  createdAt: string;
+};
 
 function toInputDate(d = new Date()) {
   return d.toISOString().slice(0, 10);
@@ -31,6 +38,25 @@ export function AgentDetail({ agentId }: { agentId: string }) {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(false);
   const [auditError, setAuditError] = useState("");
+  const [keys, setKeys] = useState<AgentKey[]>([]);
+  const [keyName, setKeyName] = useState("");
+  const [revealedToken, setRevealedToken] = useState("");
+  const [keyError, setKeyError] = useState("");
+  const [keyPending, setKeyPending] = useState(false);
+
+  const loadKeys = useCallback(async () => {
+    const res = await fetch(`/api/agents/${agentId}/keys`);
+    const data = (await res.json()) as {
+      ok: boolean;
+      keys?: AgentKey[];
+      reason?: string;
+    };
+    if (!data.ok) {
+      setKeyError(data.reason ?? "Could not load keys.");
+      return;
+    }
+    setKeys(data.keys ?? []);
+  }, [agentId]);
 
   const loadAudit = async (page = 1) => {
     if (!agent) return;
@@ -46,6 +72,64 @@ export function AgentDetail({ agentId }: { agentId: string }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Load keys when the agent page is open.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadKeys();
+  }, [loadKeys]);
+
+  async function onCreateKey() {
+    if (!agent) return;
+    setKeyError("");
+    setRevealedToken("");
+    setKeyPending(true);
+    try {
+      const res = await fetch(`/api/agents/${agent.id}/keys`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: keyName }),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        reason?: string;
+        key?: AgentKey & { token?: string };
+      };
+      if (!data.ok || !data.key) {
+        setKeyError(data.reason ?? "Could not create key.");
+        return;
+      }
+      setKeyName("");
+      setRevealedToken(data.key.token ?? "");
+      await loadKeys();
+    } catch {
+      setKeyError("Could not create key.");
+    } finally {
+      setKeyPending(false);
+    }
+  }
+
+  async function onRevokeKey(keyId: string) {
+    if (!agent) return;
+    setKeyError("");
+    setKeyPending(true);
+    try {
+      const res = await fetch(`/api/agents/${agent.id}/keys/${keyId}`, {
+        method: "DELETE",
+      });
+      const data = (await res.json()) as { ok: boolean; reason?: string };
+      if (!data.ok) {
+        setKeyError(data.reason ?? "Could not revoke key.");
+        return;
+      }
+      setRevealedToken("");
+      await loadKeys();
+    } catch {
+      setKeyError("Could not revoke key.");
+    } finally {
+      setKeyPending(false);
+    }
+  }
 
   const summary = useMemo(() => {
     const settled = audit.filter((e) => e.status === "settled");
@@ -154,6 +238,63 @@ export function AgentDetail({ agentId }: { agentId: string }) {
       <div className={cx(tw.card, "mt-3.5")}>
         <SpendBar spent={agent.spentTodayUsd} cap={agent.dailyCapUsd} />
       </div>
+
+      <h2 className={tw.h2}>API keys</h2>
+      <p className={tw.sub}>
+        For scripts that call pay without a browser login. The full key is
+        shown once.
+      </p>
+      <article className={cx(tw.card, "mt-3.5")}>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className={cx(tw.field, "min-w-[200px]")}>
+            <span>Label</span>
+            <input
+              className={tw.control}
+              value={keyName}
+              onChange={(e) => setKeyName(e.target.value)}
+              placeholder="Default"
+              autoComplete="off"
+            />
+          </label>
+          <button
+            type="button"
+            className={tw.btnPrimary}
+            disabled={keyPending}
+            onClick={() => void onCreateKey()}
+          >
+            Create key
+          </button>
+        </div>
+        {keyError ? <p className={cx(tw.bad, "mt-3")}>{keyError}</p> : null}
+        {revealedToken ? (
+          <p className={cx(tw.note, "mt-4")}>
+            Key (copy now):{" "}
+            <code className="font-mono text-[13px]">{revealedToken}</code>
+          </p>
+        ) : null}
+        {keys.length === 0 ? (
+          <p className={cx(tw.muted, "mt-5")}>No active keys.</p>
+        ) : (
+          <ul className={cx(tw.pay, "mt-5")}>
+            {keys.map((key) => (
+              <li key={key.id} className={tw.payItem}>
+                <span>
+                  <span className="block text-sm font-semibold">{key.name}</span>
+                  <span className={cx(tw.muted, "font-mono")}>{key.hint}</span>
+                </span>
+                <button
+                  type="button"
+                  className={tw.textBtn}
+                  disabled={keyPending}
+                  onClick={() => void onRevokeKey(key.id)}
+                >
+                  Revoke
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </article>
 
       <h2 className={tw.h2}>Payment Activity</h2>
       <ul className={tw.pay}>

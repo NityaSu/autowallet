@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   Activity,
   ArrowLeftRight,
-  Bell,
   Bot,
   Globe,
   LayoutDashboard,
@@ -17,6 +16,7 @@ import {
 import { useState } from "react";
 import { CloudMark } from "@/components/CloudMark";
 import { DemoBanner } from "@/components/DemoBanner";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useWallet } from "@/context/WalletProvider";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
@@ -144,16 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </kbd>
           </label>
           <div className="ml-auto flex items-center gap-2.5">
-            <button
-              type="button"
-              className="relative grid size-10 cursor-pointer place-items-center rounded-xl border-0 bg-background text-foreground"
-              aria-label="Notifications"
-            >
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 min-w-4 rounded-full bg-red-500 px-1 text-center text-[10px] leading-4 font-normal text-white">
-                3
-              </span>
-            </button>
+            <NotificationBell />
             <Link
               href="/settings"
               className="flex items-center gap-2.5 rounded-xl py-1 pr-2 pl-1 text-foreground no-underline"

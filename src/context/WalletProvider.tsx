@@ -19,6 +19,7 @@ import {
   type Person,
   type Transfer,
 } from "@/data/wallets";
+import { pingNotifications } from "@/lib/notify-ping";
 
 type Recipient = {
   id: string;
@@ -137,6 +138,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       balanceUsd: data.you!.balanceUsd,
     }));
     setLedgerReady(true);
+    pingNotifications();
   }, []);
 
   useEffect(() => {

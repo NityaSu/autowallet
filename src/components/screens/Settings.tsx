@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useWallet } from "@/context/WalletProvider";
+import { pingNotifications } from "@/lib/notify-ping";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
@@ -61,6 +62,7 @@ export function Settings() {
       }
       setUrl("");
       setRevealedSecret(data.endpoint.secret ?? "");
+      pingNotifications();
       await loadWebhooks();
     } catch {
       setError("Could not add webhook.");

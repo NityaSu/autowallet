@@ -8,6 +8,7 @@ import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
 import type { AuditEntry, Pagination } from "@/data/wallets";
 import { money } from "@/lib/money";
+import { pingNotifications } from "@/lib/notify-ping";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
@@ -101,6 +102,7 @@ export function AgentDetail({ agentId }: { agentId: string }) {
       }
       setKeyName("");
       setRevealedToken(data.key.token ?? "");
+      pingNotifications();
       await loadKeys();
     } catch {
       setKeyError("Could not create key.");
@@ -123,6 +125,7 @@ export function AgentDetail({ agentId }: { agentId: string }) {
         return;
       }
       setRevealedToken("");
+      pingNotifications();
       await loadKeys();
     } catch {
       setKeyError("Could not revoke key.");

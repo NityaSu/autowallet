@@ -2,6 +2,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { getDb, webhookEndpoints } from "@/db";
 import { centsToUsd } from "@/lib/cents";
+import { notifyWebhookCreated } from "@/lib/pg-notifications";
 
 export const MAX_WEBHOOKS_PER_OWNER = 5;
 const POST_TIMEOUT_MS = 2000;
@@ -225,6 +226,11 @@ export async function createWebhookEndpoint(ownerUserId: string, rawUrl: string)
       })
       .returning();
     if (!row) return { ok: false as const, reason: "Could not create webhook." };
+    try {
+      await notifyWebhookCreated({ ownerUserId, url: parsed.url });
+    } catch {
+      // Inbox write is optional.
+    }
     return {
       ok: true as const,
       endpoint: { ...toDto(row), secret } satisfies WebhookCreated,

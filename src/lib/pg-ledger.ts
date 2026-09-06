@@ -10,6 +10,7 @@ import {
   type TransferInput,
   type TransferResult,
 } from "@/lib/ledger-types";
+import { notifyPersonTransfer, notifyWelcome } from "@/lib/pg-notifications";
 
 export async function executeTransfer(
   input: TransferInput,
@@ -24,7 +25,7 @@ export async function executeTransfer(
   const key = input.idempotencyKey.trim();
   const db = getDb();
 
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     await tx
       .select({ id: users.id })
       .from(users)
@@ -104,6 +105,15 @@ export async function executeTransfer(
     };
     return { ok: true as const, replay: false, transfer };
   });
+
+  if (result.ok && !result.replay) {
+    try {
+      await notifyPersonTransfer(result.transfer);
+    } catch {
+      // Inbox write must not roll back a settled send.
+    }
+  }
+  return result;
 }
 
 export async function listPeople() {
@@ -229,6 +239,12 @@ export async function createUser(input: {
     });
   } catch {
     return { ok: false as const, reason: "That handle is taken." };
+  }
+
+  try {
+    await notifyWelcome(id, shape.name);
+  } catch {
+    // Welcome note is optional.
   }
 
   return {

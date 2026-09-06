@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { and, desc, eq, isNull } from "drizzle-orm";
-import { agentApiKeys, agents, getDb } from "@/db";
+import { agentApiKeys, agents, getDb, users } from "@/db";
+import { notifyAgentKey } from "@/lib/pg-notifications";
 
 export const MAX_KEYS_PER_AGENT = 5;
 
@@ -102,6 +103,21 @@ export async function createAgentKey(
     })
     .returning();
   if (!row) return { ok: false as const, reason: "Could not create key." };
+  const [agentUser] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, agentUserId))
+    .limit(1);
+  try {
+    await notifyAgentKey({
+      ownerUserId,
+      agentId: agentUserId,
+      agentName: agentUser?.name ?? "Agent",
+      keyName: label,
+    });
+  } catch {
+    // Inbox write is optional.
+  }
   return {
     ok: true as const,
     key: { ...toDto(row), token } satisfies AgentApiKeyCreated,
@@ -132,6 +148,22 @@ export async function revokeAgentKey(
     .update(agentApiKeys)
     .set({ revokedAt: new Date() })
     .where(eq(agentApiKeys.id, keyId));
+  const [agentUser] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, agentUserId))
+    .limit(1);
+  try {
+    await notifyAgentKey({
+      ownerUserId,
+      agentId: agentUserId,
+      agentName: agentUser?.name ?? "Agent",
+      keyName: row.name,
+      revoked: true,
+    });
+  } catch {
+    // Inbox write is optional.
+  }
   return { ok: true as const };
 }
 

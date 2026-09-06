@@ -5,6 +5,12 @@ import { getApiById, vendorHandleForApi } from "@/lib/api-vendors";
 import { centsToUsd, usdToCents } from "@/lib/cents";
 import { executeTransfer, findUserByHandle, findUserById } from "@/lib/pg-ledger";
 import { evaluatePolicy, type AgentStatus } from "@/lib/policy";
+import {
+  notifyAgentCreated,
+  notifyAgentFunded,
+  notifyAgentPayment,
+  notifyAgentStatus,
+} from "@/lib/pg-notifications";
 import { notifyPaymentWebhooks, type PaymentWebhookPayload } from "@/lib/pg-webhooks";
 
 export type AgentDto = {
@@ -437,6 +443,15 @@ export async function issueAgent(
 
   const loaded = await loadAgentForOwner(userId, ownerUserId);
   if (!loaded) return { ok: false as const, reason: "Agent missing after create." };
+  try {
+    await notifyAgentCreated({
+      ownerUserId,
+      agentId: userId,
+      agentName: name,
+    });
+  } catch {
+    // Inbox write is optional.
+  }
   return { ok: true as const, agent: toAgentDto(loaded.user, loaded.row) };
 }
 
@@ -469,6 +484,16 @@ export async function fundAgent(
       .update(agents)
       .set({ fundedCents: loaded.row.fundedCents + cents })
       .where(eq(agents.userId, agentUserId));
+    try {
+      await notifyAgentFunded({
+        ownerUserId,
+        agentId: agentUserId,
+        agentName: loaded.user.name,
+        amountUsd,
+      });
+    } catch {
+      // Inbox write is optional.
+    }
   }
 
   const refreshed = await loadAgentForOwner(agentUserId, ownerUserId);
@@ -492,6 +517,16 @@ export async function toggleAgentStatus(
     .update(agents)
     .set({ status: next })
     .where(eq(agents.userId, agentUserId));
+  try {
+    await notifyAgentStatus({
+      ownerUserId,
+      agentId: agentUserId,
+      agentName: loaded.user.name,
+      status: next,
+    });
+  } catch {
+    // Inbox write is optional.
+  }
   return {
     ok: true as const,
     agent: toAgentDto(loaded.user, { ...loaded.row, status: next }),
@@ -552,6 +587,24 @@ function firePaymentWebhook(ownerUserId: string, payload: PaymentWebhookPayload)
   void notifyPaymentWebhooks(ownerUserId, payload).catch(() => {});
 }
 
+function announceAgentPayment(
+  ownerUserId: string,
+  agentName: string,
+  payload: PaymentWebhookPayload,
+) {
+  firePaymentWebhook(ownerUserId, payload);
+  void notifyAgentPayment({
+    ownerUserId,
+    agentId: payload.agentId,
+    agentName,
+    paymentId: payload.paymentId,
+    apiName: payload.apiName,
+    amountCents: payload.amountCents,
+    status: payload.status,
+    reason: payload.reason,
+  }).catch(() => {});
+}
+
 export async function attemptAgentPay(
   ownerUserId: string,
   input: { agentId?: string; apiId?: string; idempotencyKey?: string },
@@ -590,7 +643,7 @@ export async function attemptAgentPay(
       status: "blocked",
       reason: decision.reason,
     });
-    firePaymentWebhook(ownerUserId, {
+    announceAgentPayment(ownerUserId, loaded.user.name, {
       paymentId,
       agentId: agentUserId,
       apiId,
@@ -617,7 +670,7 @@ export async function attemptAgentPay(
       status: "blocked",
       reason,
     });
-    firePaymentWebhook(ownerUserId, {
+    announceAgentPayment(ownerUserId, loaded.user.name, {
       paymentId,
       agentId: agentUserId,
       apiId,
@@ -651,7 +704,7 @@ export async function attemptAgentPay(
       status: "blocked",
       reason: transfer.reason,
     });
-    firePaymentWebhook(ownerUserId, {
+    announceAgentPayment(ownerUserId, loaded.user.name, {
       paymentId,
       agentId: agentUserId,
       apiId,
@@ -685,7 +738,7 @@ export async function attemptAgentPay(
     transferId: transfer.transfer.id,
   });
 
-  firePaymentWebhook(ownerUserId, {
+  announceAgentPayment(ownerUserId, loaded.user.name, {
     paymentId,
     agentId: agentUserId,
     apiId,

@@ -109,9 +109,25 @@ export const transfers = pgTable(
   (table) => [unique("transfers_from_idempotency").on(table.fromUserId, table.idempotencyKey)],
 );
 
+export const notifications = pgTable("notifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  href: text("href"),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export type UserRow = typeof users.$inferSelect;
 export type AgentRow = typeof agents.$inferSelect;
 export type AgentPaymentRow = typeof agentPayments.$inferSelect;
 export type TransferRow = typeof transfers.$inferSelect;
 export type WebhookEndpointRow = typeof webhookEndpoints.$inferSelect;
 export type AgentApiKeyRow = typeof agentApiKeys.$inferSelect;
+export type NotificationRow = typeof notifications.$inferSelect;

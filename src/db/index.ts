@@ -11,6 +11,7 @@ import {
   agentApiKeys,
   agents,
   agentPayments,
+  notifications,
   transfers,
   users,
   webhookEndpoints,
@@ -133,6 +134,22 @@ async function migrateAndSeed() {
       revoked_at timestamptz
     )
   `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id uuid PRIMARY KEY,
+      user_id uuid NOT NULL REFERENCES users(id),
+      type text NOT NULL,
+      title text NOT NULL,
+      body text NOT NULL,
+      href text,
+      read_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS notifications_user_created
+    ON notifications (user_id, created_at DESC)
+  `);
 
   const sunikId = "11111111-1111-1111-1111-111111111111";
   const midasId = "22222222-2222-2222-2222-222222222222";
@@ -252,6 +269,41 @@ async function migrateAndSeed() {
       publicKey: "0x4b1c…9a02",
     });
   }
+
+  await seedWelcomeIfEmpty(
+    db,
+    sunikId,
+    "Welcome, Sunik",
+    "Transfers, agent spend, and security events will land here.",
+  );
+  await seedWelcomeIfEmpty(
+    db,
+    midasId,
+    "Welcome, Midas",
+    "You'll see incoming sends and account alerts in this inbox.",
+  );
+}
+
+async function seedWelcomeIfEmpty(
+  db: AppDb,
+  userId: string,
+  title: string,
+  body: string,
+) {
+  const existing = await db
+    .select({ id: notifications.id })
+    .from(notifications)
+    .where(eq(notifications.userId, userId))
+    .limit(1);
+  if (existing.length > 0) return;
+  await db.insert(notifications).values({
+    id: crypto.randomUUID(),
+    userId,
+    type: "account.welcome",
+    title,
+    body,
+    href: "/",
+  });
 }
 
 export {
@@ -261,4 +313,5 @@ export {
   agentPayments,
   webhookEndpoints,
   agentApiKeys,
+  notifications,
 };

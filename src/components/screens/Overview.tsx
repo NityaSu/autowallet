@@ -145,21 +145,28 @@ export function Overview() {
           <div className="mb-2 flex items-center justify-between">
             <h2 className="m-0 text-base font-semibold">People</h2>
           </div>
-          {people.map((person) => (
-            <div
-              className="grid grid-cols-1 items-center gap-3 border-t border-line py-3 sm:grid-cols-[1fr_auto]"
-              key={person.id}
-            >
-              <div>
-                <strong className="block text-sm">{person.name}</strong>
-                <p className={tw.handle}>{person.handle}</p>
-              </div>
-              <div>
-                <span className="block text-[11px] text-muted">Handle</span>
-                <b className="font-mono text-sm">{person.handle}</b>
-              </div>
-            </div>
-          ))}
+          {people.length === 0 ? (
+            <p className={cx(tw.muted, "mb-0 border-t border-line pt-3 text-sm")}>
+              No one yet. Send to a handle and they appear here.
+            </p>
+          ) : (
+            people.map((person) => (
+              <Link
+                href={`/send?to=${encodeURIComponent(person.handle)}`}
+                className="grid grid-cols-1 items-center gap-3 border-t border-line py-3 text-foreground no-underline sm:grid-cols-[1fr_auto]"
+                key={person.id}
+              >
+                <div>
+                  <strong className="block text-sm">{person.name}</strong>
+                  <p className={tw.handle}>{person.handle}</p>
+                </div>
+                <div>
+                  <span className="block text-[11px] text-muted">Handle</span>
+                  <b className="font-mono text-sm">{person.handle}</b>
+                </div>
+              </Link>
+            ))
+          )}
         </article>
 
         <WalletTicket

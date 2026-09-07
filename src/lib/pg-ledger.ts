@@ -3,7 +3,8 @@ import { and, desc, eq, inArray, or } from "drizzle-orm";
 import { getDb, transfers, users } from "@/db";
 import { centsToUsd, SIGNUP_BALANCE_CENTS, usdToCents } from "@/lib/cents";
 import {
-  normalizeHandle,
+  HANDLE_RE,
+  completeHandle,
   validateSignupShape,
   validateTransferShape,
   type LedgerTransfer,
@@ -20,8 +21,8 @@ export async function executeTransfer(
   const cents = usdToCents(input.amountUsd);
   if (cents === null) return { ok: false, reason: "Enter an amount." };
 
-  const fromHandle = normalizeHandle(input.fromHandle);
-  const toHandle = normalizeHandle(input.toHandle);
+  const fromHandle = completeHandle(input.fromHandle);
+  const toHandle = completeHandle(input.toHandle);
   const key = input.idempotencyKey.trim();
   const db = getDb();
 
@@ -135,17 +136,63 @@ export async function listPeople() {
   }));
 }
 
-export async function listRecipients(excludeUserId?: string) {
+export async function listRecipients(userId: string) {
   const db = getDb();
   const rows = await db
+    .select()
+    .from(transfers)
+    .where(or(eq(transfers.fromUserId, userId), eq(transfers.toUserId, userId)))
+    .orderBy(desc(transfers.createdAt));
+
+  const counterpartIds: string[] = [];
+  for (const row of rows) {
+    const other = row.fromUserId === userId ? row.toUserId : row.fromUserId;
+    if (other !== userId && !counterpartIds.includes(other)) {
+      counterpartIds.push(other);
+    }
+  }
+  if (counterpartIds.length === 0) return [];
+
+  const found = await db
     .select({
       id: users.id,
       name: users.name,
       handle: users.handle,
+      kind: users.kind,
     })
     .from(users)
-    .where(eq(users.kind, "person"));
-  return rows.filter((row) => row.id !== excludeUserId);
+    .where(inArray(users.id, counterpartIds));
+  const byId = new Map(
+    found.filter((row) => row.kind === "person").map((row) => [row.id, row]),
+  );
+  return counterpartIds
+    .map((id) => {
+      const row = byId.get(id);
+      return row ? { id: row.id, name: row.name, handle: row.handle } : null;
+    })
+    .filter((row) => row !== null);
+}
+
+export async function lookupPerson(
+  rawHandle: string,
+  opts: { excludeUserId?: string } = {},
+) {
+  const handle = completeHandle(rawHandle);
+  if (!handle) return { ok: false as const, reason: "Enter who to send to." };
+  if (!HANDLE_RE.test(handle)) {
+    return { ok: false as const, reason: "Handle should look like nina.pay." };
+  }
+  const user = await findUserByHandle(handle);
+  if (!user || user.kind !== "person") {
+    return { ok: false as const, reason: `Nobody at ${handle}.` };
+  }
+  if (opts.excludeUserId && user.id === opts.excludeUserId) {
+    return { ok: false as const, reason: "Can't send to yourself." };
+  }
+  return {
+    ok: true as const,
+    person: { id: user.id, name: user.name, handle: user.handle },
+  };
 }
 
 export async function listTransfersForUser(userId: string) {
@@ -205,7 +252,7 @@ export async function findUserByHandle(handle: string) {
   const [row] = await db
     .select()
     .from(users)
-    .where(eq(users.handle, normalizeHandle(handle)))
+    .where(eq(users.handle, completeHandle(handle)))
     .limit(1);
   return row ?? null;
 }

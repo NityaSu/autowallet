@@ -24,7 +24,13 @@ export function normalizeHandle(handle: string) {
   return handle.trim().toLowerCase();
 }
 
-const HANDLE_RE = /^[a-z][a-z0-9-]{1,22}\.pay$/;
+export function completeHandle(handle: string) {
+  const h = normalizeHandle(handle);
+  if (!h || h.includes(".")) return h;
+  return `${h}.pay`;
+}
+
+export const HANDLE_RE = /^[a-z][a-z0-9-]{1,22}\.pay$/;
 
 export function validateSignupShape(input: {
   name?: string;
@@ -47,8 +53,8 @@ export function validateSignupShape(input: {
 }
 
 export function validateTransferShape(input: TransferInput): TransferFail | null {
-  const from = normalizeHandle(input.fromHandle);
-  const to = normalizeHandle(input.toHandle);
+  const from = completeHandle(input.fromHandle);
+  const to = completeHandle(input.toHandle);
   const key = input.idempotencyKey.trim();
   if (!key) return { ok: false, reason: "Missing idempotency key." };
   if (!to) return { ok: false, reason: "Enter who to send to." };

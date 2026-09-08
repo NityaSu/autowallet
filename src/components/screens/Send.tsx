@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useRef, useState } from "react";
 import { useWallet } from "@/context/WalletProvider";
+import { CopyHandle } from "@/components/CopyHandle";
 import { completeHandle } from "@/lib/ledger-types";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
@@ -130,9 +131,10 @@ export function Send() {
             <strong className="mt-2 mb-1.5 block text-[26px] tracking-tight text-brand">
               {money(you.balanceUsd)}
             </strong>
-            <em className="text-xs not-italic text-muted">
+            <em className="mb-3 block text-xs not-italic text-muted">
               {you.name} · {you.handle}
             </em>
+            <CopyHandle handle={you.handle} />
           </div>
         </article>
         {found ? (

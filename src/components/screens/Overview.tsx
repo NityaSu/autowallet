@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
+import { CopyHandle } from "@/components/CopyHandle";
 import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
 import { formatTxTime, greeting, money } from "@/lib/money";
@@ -48,14 +49,20 @@ export function Overview() {
           </h1>
           <p className={tw.sub}>Here&apos;s what&apos;s happening with AutoWallet today.</p>
         </div>
-        <button
-          type="button"
-          className={cx(tw.btnPrimary, "h-[42px] shrink-0 rounded-xl px-4")}
-          onClick={() => router.push("/send")}
-        >
-          <ArrowLeftRight size={16} />
-          Send money
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <CopyHandle
+            handle={account.handle}
+            className="h-[42px] rounded-xl px-4"
+          />
+          <button
+            type="button"
+            className={cx(tw.btnPrimary, "h-[42px] shrink-0 rounded-xl px-4")}
+            onClick={() => router.push("/send")}
+          >
+            <ArrowLeftRight size={16} />
+            Send money
+          </button>
+        </div>
       </div>
 
       <div className={tw.stats}>
@@ -147,7 +154,8 @@ export function Overview() {
           </div>
           {people.length === 0 ? (
             <p className={cx(tw.muted, "mb-0 border-t border-line pt-3 text-sm")}>
-              No one yet. Send to a handle and they appear here.
+              No one yet. Copy your handle so someone can send to you, or send
+              to a handle and they appear here.
             </p>
           ) : (
             people.map((person) => (

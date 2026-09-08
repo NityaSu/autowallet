@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWallet } from "@/context/WalletProvider";
 import { CopyHandle, CopyPayLink } from "@/components/CopyHandle";
 import { completeHandle } from "@/lib/ledger-types";
@@ -16,8 +16,9 @@ export function Send() {
   const search = useSearchParams();
   const { you, people, transfers, sendToPerson, ledgerReady, ledgerError } =
     useWallet();
+  const queryTo = search.get("to") ?? "";
   const recent = people.filter((p) => p.handle !== you.handle);
-  const [to, setTo] = useState(search.get("to") ?? "");
+  const [to, setTo] = useState(queryTo);
   const [amount, setAmount] = useState("5.00");
   const [memo, setMemo] = useState("coffee");
   const [error, setError] = useState("");
@@ -28,7 +29,7 @@ export function Send() {
 
   const preview = useMemo(() => Number.parseFloat(amount) || 0, [amount]);
 
-  async function lookup(handle = to) {
+  const lookup = useCallback(async (handle: string) => {
     const res = await fetch(
       `/api/people?handle=${encodeURIComponent(completeHandle(handle))}`,
     );
@@ -45,14 +46,36 @@ export function Send() {
     setFound(data.person);
     setTo(data.person.handle);
     return { ok: true as const, person: data.person };
-  }
+  }, []);
+
+  useEffect(() => {
+    if (!queryTo || !ledgerReady) return;
+    let cancelled = false;
+    setError("");
+    setPending(true);
+    void lookup(queryTo)
+      .then((result) => {
+        if (cancelled) return;
+        if (!result.ok) setError(result.reason);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setError("Could not look up that handle.");
+      })
+      .finally(() => {
+        if (!cancelled) setPending(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [queryTo, ledgerReady, lookup]);
 
   async function onContinue(e: FormEvent) {
     e.preventDefault();
     setError("");
     setPending(true);
     try {
-      const result = await lookup();
+      const result = await lookup(to);
       if (!result.ok) {
         setError(result.reason);
         return;

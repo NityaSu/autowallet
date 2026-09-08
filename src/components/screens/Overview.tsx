@@ -14,6 +14,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { CopyHandle, CopyPayLink } from "@/components/CopyHandle";
+import { PayQr } from "@/components/PayQr";
 import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
 import { formatTxTime, greeting, money } from "@/lib/money";
@@ -158,8 +159,8 @@ export function Overview() {
           </div>
           {people.length === 0 ? (
             <p className={cx(tw.muted, "mb-0 border-t border-line pt-3 text-sm")}>
-              No one yet. Copy your handle or pay link so someone can send to
-              you, or send to a handle and they appear here.
+              No one yet. Copy your handle or pay link, or show the QR so
+              someone can send to you.
             </p>
           ) : (
             people.map((person) => (
@@ -181,14 +182,17 @@ export function Overview() {
           )}
         </article>
 
-        <WalletTicket
-          owner={account.owner}
-          handle={account.handle}
-          balanceUsd={account.balanceUsd}
-          spentTodayUsd={stats.spentToday}
-          receivedTodayUsd={stats.receivedToday}
-          onManage={() => router.push("/send")}
-        />
+        <div>
+          <WalletTicket
+            owner={account.owner}
+            handle={account.handle}
+            balanceUsd={account.balanceUsd}
+            spentTodayUsd={stats.spentToday}
+            receivedTodayUsd={stats.receivedToday}
+            onManage={() => router.push("/send")}
+          />
+          <PayQr handle={account.handle} />
+        </div>
       </div>
 
       <div className={tw.ovSplit}>

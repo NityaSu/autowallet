@@ -20,19 +20,24 @@ async function writeClipboard(text: string) {
   el.remove();
 }
 
-export function CopyHandle({
-  handle,
+function CopyText({
+  label,
   className,
+  disabled,
+  getText,
 }: {
-  handle: string;
+  label: string;
   className?: string;
+  disabled?: boolean;
+  getText: () => string;
 }) {
   const [copied, setCopied] = useState(false);
 
   async function onCopy() {
-    if (!handle) return;
+    const text = getText();
+    if (!text) return;
     try {
-      await writeClipboard(handle);
+      await writeClipboard(text);
     } catch {
       return;
     }
@@ -44,10 +49,51 @@ export function CopyHandle({
     <button
       type="button"
       className={cx(tw.btn, className)}
-      disabled={!handle}
+      disabled={disabled}
       onClick={() => void onCopy()}
     >
-      {copied ? "Copied" : handle ? `Copy ${handle}` : "Copy handle"}
+      {copied ? "Copied" : label}
     </button>
+  );
+}
+
+export function payLinkFor(handle: string, origin = "") {
+  const path = `/send?to=${encodeURIComponent(handle)}`;
+  return origin ? `${origin}${path}` : path;
+}
+
+export function CopyHandle({
+  handle,
+  className,
+}: {
+  handle: string;
+  className?: string;
+}) {
+  return (
+    <CopyText
+      className={className}
+      disabled={!handle}
+      label={handle ? `Copy ${handle}` : "Copy handle"}
+      getText={() => handle}
+    />
+  );
+}
+
+export function CopyPayLink({
+  handle,
+  className,
+}: {
+  handle: string;
+  className?: string;
+}) {
+  return (
+    <CopyText
+      className={className}
+      disabled={!handle}
+      label="Copy pay link"
+      getText={() =>
+        payLinkFor(handle, typeof window !== "undefined" ? window.location.origin : "")
+      }
+    />
   );
 }

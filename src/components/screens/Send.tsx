@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useRef, useState } from "react";
 import { useWallet } from "@/context/WalletProvider";
-import { CopyHandle } from "@/components/CopyHandle";
+import { CopyHandle, CopyPayLink } from "@/components/CopyHandle";
 import { completeHandle } from "@/lib/ledger-types";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
@@ -134,7 +134,10 @@ export function Send() {
             <em className="mb-3 block text-xs not-italic text-muted">
               {you.name} · {you.handle}
             </em>
-            <CopyHandle handle={you.handle} />
+            <div className="flex flex-wrap gap-2">
+              <CopyHandle handle={you.handle} />
+              <CopyPayLink handle={you.handle} />
+            </div>
           </div>
         </article>
         {found ? (

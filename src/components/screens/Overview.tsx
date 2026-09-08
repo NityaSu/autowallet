@@ -13,7 +13,7 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { CopyHandle } from "@/components/CopyHandle";
+import { CopyHandle, CopyPayLink } from "@/components/CopyHandle";
 import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
 import { formatTxTime, greeting, money } from "@/lib/money";
@@ -51,6 +51,10 @@ export function Overview() {
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           <CopyHandle
+            handle={account.handle}
+            className="h-[42px] rounded-xl px-4"
+          />
+          <CopyPayLink
             handle={account.handle}
             className="h-[42px] rounded-xl px-4"
           />
@@ -154,8 +158,8 @@ export function Overview() {
           </div>
           {people.length === 0 ? (
             <p className={cx(tw.muted, "mb-0 border-t border-line pt-3 text-sm")}>
-              No one yet. Copy your handle so someone can send to you, or send
-              to a handle and they appear here.
+              No one yet. Copy your handle or pay link so someone can send to
+              you, or send to a handle and they appear here.
             </p>
           ) : (
             people.map((person) => (

@@ -12,6 +12,7 @@ import {
   agents,
   agentPayments,
   notifications,
+  paymentRequests,
   transfers,
   users,
   webhookEndpoints,
@@ -79,6 +80,22 @@ async function migrateAndSeed() {
   await db.execute(sql`
     CREATE UNIQUE INDEX IF NOT EXISTS transfers_from_idempotency
     ON transfers (from_user_id, idempotency_key)
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS payment_requests (
+      id uuid PRIMARY KEY,
+      from_user_id uuid NOT NULL REFERENCES users(id),
+      to_user_id uuid NOT NULL REFERENCES users(id),
+      amount_cents integer NOT NULL,
+      memo text NOT NULL,
+      status text NOT NULL,
+      transfer_id uuid,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS payment_requests_to_created
+    ON payment_requests (to_user_id, created_at DESC)
   `);
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS agents (
@@ -314,4 +331,5 @@ export {
   webhookEndpoints,
   agentApiKeys,
   notifications,
+  paymentRequests,
 };

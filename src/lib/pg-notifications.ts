@@ -288,3 +288,19 @@ export async function notifyWebhookCreated(input: {
     href: "/settings",
   });
 }
+
+export async function notifyPaymentRequest(input: {
+  toUserId: string;
+  fromName: string;
+  fromHandle: string;
+  amountUsd: number;
+  requestId: string;
+}) {
+  return createNotification({
+    userId: input.toUserId,
+    type: "transfer.request",
+    title: `${input.fromName} asked for ${money(input.amountUsd)}`,
+    body: `Pay ${input.fromHandle} from your wallet. Confirm the name before you send.`,
+    href: `/requests/${input.requestId}`,
+  });
+}

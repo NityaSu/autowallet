@@ -10,6 +10,7 @@ export type NotificationType =
   | "agent.payment.blocked"
   | "agent.key.created"
   | "agent.key.revoked"
+  | "transfer.request"
   | "webhook.created";
 
 export type NotificationKind = "account" | "money" | "agent" | "security";

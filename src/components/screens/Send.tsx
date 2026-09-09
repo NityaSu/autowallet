@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWallet } from "@/context/WalletProvider";
 import { CopyHandle, CopyPayLink } from "@/components/CopyHandle";
+import { RequestMoney } from "@/components/RequestMoney";
 import { completeHandle } from "@/lib/ledger-types";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
@@ -25,6 +26,7 @@ export function Send() {
   const [pending, setPending] = useState(false);
   const [found, setFound] = useState<Found | null>(null);
   const [step, setStep] = useState<"draft" | "confirm">("draft");
+  const [mode, setMode] = useState<"send" | "request">("send");
   const keyRef = useRef(crypto.randomUUID());
 
   const preview = useMemo(() => Number.parseFloat(amount) || 0, [amount]);
@@ -51,6 +53,8 @@ export function Send() {
   useEffect(() => {
     if (!queryTo || !ledgerReady) return;
     let cancelled = false;
+    // Prefill from ?to= then look up the person.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError("");
     setPending(true);
     void lookup(queryTo)
@@ -138,15 +142,38 @@ export function Send() {
 
   return (
     <section className={tw.page}>
-      <h1 className={tw.h1}>Send</h1>
+      <h1 className={tw.h1}>{mode === "send" ? "Send" : "Request"}</h1>
       <p className={tw.sub}>
-        Type a handle, confirm the name, then send. Recent people come from
-        your own transfers — not everyone on AutoWallet.
+        {mode === "send"
+          ? "Type a handle, confirm the name, then send. Recent people come from your own transfers."
+          : "Ask someone for money. They get an inbox item and confirm the name before they pay."}
       </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={mode === "send" ? tw.btnPrimary : tw.btn}
+          onClick={() => setMode("send")}
+        >
+          Send
+        </button>
+        <button
+          type="button"
+          className={mode === "request" ? tw.btnPrimary : tw.btn}
+          onClick={() => setMode("request")}
+        >
+          Request
+        </button>
+      </div>
       {ledgerError ? (
         <p className="font-semibold text-bad">{ledgerError}</p>
       ) : null}
 
+      {mode === "request" ? (
+        <div className="mt-[18px]">
+          <RequestMoney />
+        </div>
+      ) : (
+        <>
       <div className={cx(tw.stats, "mt-[18px]")}>
         <article className={tw.stat}>
           <div>
@@ -307,6 +334,8 @@ export function Send() {
             </li>
           ))}
         </ul>
+      )}
+        </>
       )}
     </section>
   );

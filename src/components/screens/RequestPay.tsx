@@ -9,15 +9,24 @@ import { pingNotifications } from "@/lib/notify-ping";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
+type RequestStatus = "pending" | "paid" | "declined" | "cancelled";
+
 type RequestDto = {
   id: string;
   amountUsd: number;
   memo: string;
-  status: "pending" | "paid";
+  status: RequestStatus;
   from: { id: string; name: string; handle: string };
   to: { id: string; name: string; handle: string };
   transferId: string | null;
 };
+
+function statusLabel(status: RequestStatus) {
+  if (status === "paid") return "Paid";
+  if (status === "declined") return "Declined";
+  if (status === "cancelled") return "Cancelled";
+  return "Asked for";
+}
 
 export function RequestPay({ requestId }: { requestId: string }) {
   const router = useRouter();
@@ -26,7 +35,10 @@ export function RequestPay({ requestId }: { requestId: string }) {
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
   const [pending, setPending] = useState(false);
-  const [step, setStep] = useState<"view" | "confirm">("view");
+  const [step, setStep] = useState<"view" | "confirm-pay" | "confirm-close">(
+    "view",
+  );
+  const [closeKind, setCloseKind] = useState<"decline" | "cancel">("decline");
 
   useEffect(() => {
     let cancelled = false;
@@ -84,13 +96,42 @@ export function RequestPay({ requestId }: { requestId: string }) {
     }
   }
 
+  async function onClose() {
+    setError("");
+    setPending(true);
+    try {
+      const res = await fetch(`/api/requests/${requestId}/${closeKind}`, {
+        method: "POST",
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        reason?: string;
+        request?: RequestDto;
+      };
+      if (!data.ok || !data.request) {
+        setError(data.reason ?? "Could not close this request.");
+        return;
+      }
+      setRequest(data.request);
+      setStep("view");
+      pingNotifications();
+    } catch {
+      setError("Could not close this request.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <section className={tw.page}>
       <Link href="/send" className={tw.back}>
         ← Send
       </Link>
       <h1 className={tw.h1}>Payment request</h1>
-      <p className={tw.sub}>Confirm the name, then send. Same as a normal transfer.</p>
+      <p className={tw.sub}>
+        Pay with the same name confirm. Decline or cancel closes it — no money
+        moves.
+      </p>
 
       {!ready ? (
         <p className={cx(tw.muted, "mt-4")}>Loading…</p>
@@ -98,9 +139,7 @@ export function RequestPay({ requestId }: { requestId: string }) {
         <p className="mt-4 font-semibold text-bad">{error}</p>
       ) : request ? (
         <article className={cx(tw.card, "mt-4")}>
-          <span className={tw.kicker}>
-            {request.status === "paid" ? "Paid" : "Asked for"}
-          </span>
+          <span className={tw.kicker}>{statusLabel(request.status)}</span>
           <strong className="mt-2 mb-4 block text-4xl tracking-tight text-brand">
             {money(request.amountUsd)}
           </strong>
@@ -129,24 +168,52 @@ export function RequestPay({ requestId }: { requestId: string }) {
             </Link>
           ) : null}
 
-          {isMine && request.status === "pending" ? (
-            <p className={cx(tw.muted, "mt-4 mb-0 text-sm")}>
-              Waiting for {request.to.name} to pay.
-            </p>
+          {isMine && request.status === "pending" && step === "view" ? (
+            <div className="mt-4">
+              <p className={cx(tw.muted, "mt-0 mb-3 text-sm")}>
+                Waiting for {request.to.name} to pay.
+              </p>
+              <button
+                type="button"
+                className={tw.btn}
+                disabled={pending}
+                onClick={() => {
+                  setCloseKind("cancel");
+                  setStep("confirm-close");
+                  setError("");
+                }}
+              >
+                Cancel request
+              </button>
+            </div>
           ) : null}
 
           {isPayer && request.status === "pending" && step === "view" ? (
-            <button
-              type="button"
-              className={cx(tw.btnPrimary, "mt-4")}
-              disabled={pending}
-              onClick={() => setStep("confirm")}
-            >
-              Continue
-            </button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={tw.btnPrimary}
+                disabled={pending}
+                onClick={() => setStep("confirm-pay")}
+              >
+                Continue
+              </button>
+              <button
+                type="button"
+                className={tw.btn}
+                disabled={pending}
+                onClick={() => {
+                  setCloseKind("decline");
+                  setStep("confirm-close");
+                  setError("");
+                }}
+              >
+                Decline
+              </button>
+            </div>
           ) : null}
 
-          {isPayer && request.status === "pending" && step === "confirm" ? (
+          {isPayer && request.status === "pending" && step === "confirm-pay" ? (
             <div className="mt-4">
               <p className="m-0 text-base font-semibold">
                 Send {money(request.amountUsd)} to {request.from.name} ·{" "}
@@ -177,6 +244,51 @@ export function RequestPay({ requestId }: { requestId: string }) {
                 </button>
               </div>
             </div>
+          ) : null}
+
+          {request.status === "pending" && step === "confirm-close" ? (
+            <div className="mt-4">
+              <p className="m-0 text-base font-semibold">
+                {closeKind === "decline"
+                  ? `Decline ${request.from.name}'s request for ${money(request.amountUsd)}?`
+                  : `Cancel this ${money(request.amountUsd)} ask to ${request.to.name}?`}
+              </p>
+              {error ? (
+                <p className="mt-3 font-semibold text-bad">{error}</p>
+              ) : null}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={tw.btnPrimary}
+                  disabled={pending}
+                  onClick={() => void onClose()}
+                >
+                  {closeKind === "decline" ? "Decline" : "Cancel request"}
+                </button>
+                <button
+                  type="button"
+                  className={tw.btn}
+                  disabled={pending}
+                  onClick={() => {
+                    setStep("view");
+                    setError("");
+                  }}
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {request.status === "declined" ? (
+            <p className={cx(tw.muted, "mt-4 mb-0 text-sm")}>
+              {request.to.name} declined. No money moved.
+            </p>
+          ) : null}
+          {request.status === "cancelled" ? (
+            <p className={cx(tw.muted, "mt-4 mb-0 text-sm")}>
+              {request.from.name} cancelled this request. No money moved.
+            </p>
           ) : null}
 
           {error && request ? (

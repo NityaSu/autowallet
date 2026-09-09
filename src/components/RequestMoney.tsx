@@ -17,6 +17,13 @@ type Incoming = {
   from: { name: string; handle: string };
 };
 
+type Outgoing = {
+  id: string;
+  amountUsd: number;
+  memo: string;
+  to: { name: string; handle: string };
+};
+
 export function RequestMoney() {
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("5.00");
@@ -27,23 +34,28 @@ export function RequestMoney() {
   const [step, setStep] = useState<"draft" | "confirm">("draft");
   const [done, setDone] = useState("");
   const [incoming, setIncoming] = useState<Incoming[]>([]);
+  const [outgoing, setOutgoing] = useState<Outgoing[]>([]);
 
   const preview = useMemo(() => Number.parseFloat(amount) || 0, [amount]);
 
-  const loadIncoming = useCallback(async () => {
+  const loadLists = useCallback(async () => {
     const res = await fetch("/api/requests");
     const data = (await res.json()) as {
       ok: boolean;
       incoming?: Incoming[];
+      outgoing?: Outgoing[];
     };
-    if (data.ok) setIncoming(data.incoming ?? []);
+    if (data.ok) {
+      setIncoming(data.incoming ?? []);
+      setOutgoing(data.outgoing ?? []);
+    }
   }, []);
 
   useEffect(() => {
-    // Inbox of open requests for the signed-in payer.
+    // Open asks for the signed-in user.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadIncoming();
-  }, [loadIncoming]);
+    void loadLists();
+  }, [loadLists]);
 
   async function lookup(handle: string) {
     const res = await fetch(
@@ -107,6 +119,7 @@ export function RequestMoney() {
         return;
       }
       pingNotifications();
+      await loadLists();
       setDone(`Asked ${found.name} for ${money(preview)}.`);
       setStep("draft");
       setFound(null);
@@ -234,6 +247,35 @@ export function RequestMoney() {
                 <b className={tw.amt}>{money(item.amountUsd)}</b>
                 <em className="text-xs font-semibold not-italic text-brand">
                   Pay →
+                </em>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2 className={tw.h2}>You asked</h2>
+      {outgoing.length === 0 ? (
+        <p className={tw.muted}>No open asks. They stay here until they pay or you cancel.</p>
+      ) : (
+        <ul className={tw.pay}>
+          {outgoing.map((item) => (
+            <li key={item.id} className={tw.payItem}>
+              <Link
+                href={`/requests/${item.id}`}
+                className="contents text-foreground no-underline"
+              >
+                <span>
+                  <strong className="font-semibold">{item.to.name}</strong>
+                  <span className={tw.muted}>
+                    {" "}
+                    · {item.to.handle}
+                    {item.memo ? ` · ${item.memo}` : ""}
+                  </span>
+                </span>
+                <b className={tw.amt}>{money(item.amountUsd)}</b>
+                <em className="text-xs font-semibold not-italic text-brand">
+                  Cancel →
                 </em>
               </Link>
             </li>

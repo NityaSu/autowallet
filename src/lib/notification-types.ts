@@ -11,6 +11,8 @@ export type NotificationType =
   | "agent.key.created"
   | "agent.key.revoked"
   | "transfer.request"
+  | "transfer.request.declined"
+  | "transfer.request.cancelled"
   | "webhook.created";
 
 export type NotificationKind = "account" | "money" | "agent" | "security";

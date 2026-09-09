@@ -304,3 +304,33 @@ export async function notifyPaymentRequest(input: {
     href: `/requests/${input.requestId}`,
   });
 }
+
+export async function notifyRequestDeclined(input: {
+  toUserId: string;
+  fromName: string;
+  amountUsd: number;
+  requestId: string;
+}) {
+  return createNotification({
+    userId: input.toUserId,
+    type: "transfer.request.declined",
+    title: `${input.fromName} declined ${money(input.amountUsd)}`,
+    body: "They did not send. The request is closed.",
+    href: `/requests/${input.requestId}`,
+  });
+}
+
+export async function notifyRequestCancelled(input: {
+  toUserId: string;
+  fromName: string;
+  amountUsd: number;
+  requestId: string;
+}) {
+  return createNotification({
+    userId: input.toUserId,
+    type: "transfer.request.cancelled",
+    title: `${input.fromName} cancelled a ${money(input.amountUsd)} request`,
+    body: "You do not need to pay. The request is closed.",
+    href: `/requests/${input.requestId}`,
+  });
+}

@@ -2,9 +2,13 @@ import { and, desc, eq } from "drizzle-orm";
 import { getDb, paymentRequests, users } from "@/db";
 import { centsToUsd, usdToCents } from "@/lib/cents";
 import { executeTransfer, findUserById, lookupPerson } from "@/lib/pg-ledger";
-import { notifyPaymentRequest } from "@/lib/pg-notifications";
+import {
+  notifyPaymentRequest,
+  notifyRequestCancelled,
+  notifyRequestDeclined,
+} from "@/lib/pg-notifications";
 
-export type PaymentRequestStatus = "pending" | "paid";
+export type PaymentRequestStatus = "pending" | "paid" | "declined" | "cancelled";
 
 export type PaymentRequestDto = {
   id: string;
@@ -140,6 +144,112 @@ export async function listIncomingRequests(userId: string) {
   return items;
 }
 
+export async function listOutgoingRequests(userId: string) {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(paymentRequests)
+    .where(
+      and(eq(paymentRequests.fromUserId, userId), eq(paymentRequests.status, "pending")),
+    )
+    .orderBy(desc(paymentRequests.createdAt));
+  const items: PaymentRequestDto[] = [];
+  for (const row of rows) {
+    const dto = await hydrate(row);
+    if (dto) items.push(dto);
+  }
+  return items;
+}
+
+async function closePaymentRequest(
+  actorUserId: string,
+  requestId: string,
+  action: "decline" | "cancel",
+) {
+  const loaded = await getPaymentRequestForUser(requestId, actorUserId);
+  if (!loaded.ok) return loaded;
+  const { request } = loaded;
+  const nextStatus = action === "decline" ? "declined" : "cancelled";
+
+  if (action === "decline" && request.to.id !== actorUserId) {
+    return { ok: false as const, reason: "This request is not for you." };
+  }
+  if (action === "cancel" && request.from.id !== actorUserId) {
+    return { ok: false as const, reason: "You didn't send this request." };
+  }
+  if (request.status === "paid") {
+    return { ok: false as const, reason: "Already paid." };
+  }
+  if (request.status === nextStatus) {
+    return { ok: true as const, replay: true, request };
+  }
+  if (request.status !== "pending") {
+    return { ok: false as const, reason: "This request is already closed." };
+  }
+
+  const db = getDb();
+  const [updated] = await db
+    .update(paymentRequests)
+    .set({ status: nextStatus })
+    .where(
+      and(
+        eq(paymentRequests.id, request.id),
+        eq(paymentRequests.status, "pending"),
+      ),
+    )
+    .returning();
+  if (!updated) {
+    const raced = await getPaymentRequestForUser(requestId, actorUserId);
+    if (!raced.ok) return raced;
+    if (raced.request.status === "paid") {
+      return { ok: false as const, reason: "Already paid." };
+    }
+    if (raced.request.status === nextStatus) {
+      return { ok: true as const, replay: true, request: raced.request };
+    }
+    return { ok: false as const, reason: "This request is already closed." };
+  }
+
+  const actor = await findUserById(actorUserId);
+  try {
+    if (action === "decline") {
+      await notifyRequestDeclined({
+        toUserId: request.from.id,
+        fromName: actor?.name ?? request.to.name,
+        amountUsd: request.amountUsd,
+        requestId: request.id,
+      });
+    } else {
+      await notifyRequestCancelled({
+        toUserId: request.to.id,
+        fromName: actor?.name ?? request.from.name,
+        amountUsd: request.amountUsd,
+        requestId: request.id,
+      });
+    }
+  } catch {
+    // Inbox write is optional.
+  }
+
+  const refreshed = await getPaymentRequestForUser(requestId, actorUserId);
+  if (!refreshed.ok) return refreshed;
+  return { ok: true as const, replay: false, request: refreshed.request };
+}
+
+export async function declinePaymentRequest(
+  payerUserId: string,
+  requestId: string,
+) {
+  return closePaymentRequest(payerUserId, requestId, "decline");
+}
+
+export async function cancelPaymentRequest(
+  requesterUserId: string,
+  requestId: string,
+) {
+  return closePaymentRequest(requesterUserId, requestId, "cancel");
+}
+
 export async function payPaymentRequest(
   payerUserId: string,
   requestId: string,
@@ -152,6 +262,9 @@ export async function payPaymentRequest(
   }
   if (request.status === "paid") {
     return { ok: true as const, replay: true, request };
+  }
+  if (request.status !== "pending") {
+    return { ok: false as const, reason: "This request is closed." };
   }
 
   const payer = await findUserById(payerUserId);

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { ensureDb } from "@/db";
-import { createPaymentRequest, listIncomingRequests } from "@/lib/pg-requests";
+import {
+  createPaymentRequest,
+  listIncomingRequests,
+  listOutgoingRequests,
+} from "@/lib/pg-requests";
 import { getSession } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -12,8 +16,11 @@ export async function GET() {
   }
   try {
     await ensureDb();
-    const incoming = await listIncomingRequests(session.id);
-    return NextResponse.json({ ok: true, incoming });
+    const [incoming, outgoing] = await Promise.all([
+      listIncomingRequests(session.id),
+      listOutgoingRequests(session.id),
+    ]);
+    return NextResponse.json({ ok: true, incoming, outgoing });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Database unavailable.";
     return NextResponse.json({ ok: false, reason: message }, { status: 503 });

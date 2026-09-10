@@ -106,14 +106,14 @@
 
 .decoCloud {
   position: absolute;
-  right: -30px;
-  top: 50%;
+  right: 90px;
+  top: 42%;
   transform: translateY(-50%);
-  width: 180px;
-  height: 100px;
+  width: 140px;
+  height: 80px;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.12;
+  opacity: 0.08;
 }
 
 .decoMain {
@@ -249,15 +249,47 @@
   text-transform: uppercase;
 }
 
+.mid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: relative;
+  z-index: 3;
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 10px;
+}
+
+.midCopy {
+  min-width: 0;
+}
+
+.qr {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+
+.qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .sectionLabel {
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.18em;
   color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
-  position: relative;
-  z-index: 3;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 
 .ownerName {
@@ -265,8 +297,6 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   color: rgba(255, 255, 255, 0.95);
-  position: relative;
-  z-index: 3;
   margin-bottom: 6px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   text-transform: uppercase;
@@ -278,9 +308,6 @@
   font-size: 12px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.55);
-  position: relative;
-  z-index: 3;
-  margin-bottom: auto;
   font-family: var(--font-mono);
   letter-spacing: 0.02em;
 }
@@ -578,12 +605,17 @@
     font-size: 12px;
   }
   .sectionLabel {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+  }
+  .qr {
+    width: 72px;
+    height: 72px;
+    padding: 5px;
   }
   .decoCloud {
-    width: 150px;
-    height: 85px;
-    right: -25px;
+    width: 110px;
+    height: 70px;
+    right: 70px;
   }
   .decoMain {
     width: 85px;

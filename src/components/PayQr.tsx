@@ -1,34 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { payLinkFor } from "@/components/CopyHandle";
-import * as tw from "@/lib/tw";
-import { cx } from "@/lib/tw";
 
-export function PayQr({ handle }: { handle: string }) {
-  const [origin, setOrigin] = useState("");
+function subscribe() {
+  return () => {};
+}
 
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
+function originClient() {
+  return window.location.origin;
+}
 
-  if (!handle || !origin) return null;
+function originServer() {
+  return "";
+}
 
-  const url = payLinkFor(handle, origin);
+export function PayQr({
+  handle,
+  size = 80,
+  className,
+}: {
+  handle: string;
+  size?: number;
+  className?: string;
+}) {
+  const origin = useSyncExternalStore(subscribe, originClient, originServer);
+
+  if (!handle || !origin) {
+    return <div className={className} aria-hidden />;
+  }
 
   return (
-    <article className={cx(tw.card, "mt-3.5")}>
-      <span className={tw.kicker}>Scan to pay</span>
-      <div className="mt-3 flex items-center gap-4">
-        <div className="rounded-xl bg-white p-2">
-          <QRCodeSVG value={url} size={128} marginSize={1} level="M" />
-        </div>
-        <p className={cx(tw.muted, "m-0 max-w-[16rem] text-sm")}>
-          Opens Send as {handle}. They still confirm the name before money
-          moves.
-        </p>
-      </div>
-    </article>
+    <div className={className} aria-label={`Scan to send money to ${handle}`}>
+      <QRCodeSVG
+        value={payLinkFor(handle, origin)}
+        size={size}
+        marginSize={1}
+        level="M"
+        bgColor="#ffffff"
+        fgColor="#1c1612"
+      />
+    </div>
   );
 }

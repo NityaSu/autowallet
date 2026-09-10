@@ -1,3 +1,6 @@
+"use client";
+
+import { PayQr } from "@/components/PayQr";
 import { money, splitName } from "@/lib/money";
 import styles from "./WalletTicket.module.css";
 
@@ -86,18 +89,22 @@ export function WalletTicket({
             </div>
           </div>
 
-          <div className={styles.sectionLabel}>Personal wallet · Owner</div>
-
-          <div className={styles.ownerName}>
-            {first}
-            {last ? (
-              <>
-                <br />
-                {last}
-              </>
-            ) : null}
+          <div className={styles.mid}>
+            <div className={styles.midCopy}>
+              <div className={styles.sectionLabel}>Personal wallet · Owner</div>
+              <div className={styles.ownerName}>
+                {first}
+                {last ? (
+                  <>
+                    <br />
+                    {last}
+                  </>
+                ) : null}
+              </div>
+              <div className={styles.handle}>{handle}</div>
+            </div>
+            <PayQr handle={handle} size={80} className={styles.qr} />
           </div>
-          <div className={styles.handle}>{handle}</div>
 
           <div className={styles.statsRow}>
             <div className={styles.stat}>

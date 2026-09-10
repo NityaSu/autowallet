@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="grid min-h-dvh grid-cols-1 bg-background text-foreground lg:grid-cols-[248px_1fr]">
+    <div className="grid min-h-dvh min-w-0 grid-cols-1 overflow-x-hidden bg-background text-foreground lg:grid-cols-[248px_1fr]">
       <aside
         className={cx(
           "flex-col border-r border-line bg-white px-3.5 pb-4 pt-5",
@@ -108,33 +108,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-line bg-white px-6">
+        <header className="sticky top-0 z-20 flex h-16 min-w-0 items-center gap-2 border-b border-line bg-white px-4 sm:gap-4 sm:px-6">
           <button
             type="button"
-            className="inline-flex h-[34px] cursor-pointer items-center rounded-lg border border-line bg-white px-3 text-[13px] text-foreground lg:hidden"
+            className="inline-flex h-[34px] shrink-0 cursor-pointer items-center rounded-lg border border-line bg-white px-3 text-[13px] text-foreground lg:hidden"
             aria-expanded={menuOpen}
             aria-label="Open menu"
             onClick={() => setMenuOpen((v) => !v)}
           >
             Menu
           </button>
-          <div className="ml-auto flex items-center gap-2.5">
+          <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-2.5">
             <NotificationBell />
             <Link
               href="/settings"
-              className="flex items-center gap-2.5 rounded-xl py-1 pr-2 pl-1 text-foreground no-underline"
+              className="flex min-w-0 items-center gap-2 rounded-xl py-1 pr-1 pl-1 text-foreground no-underline sm:gap-2.5 sm:pr-2"
             >
-              <span className="grid size-9 place-items-center rounded-full bg-brand text-xs font-bold text-white">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-xs font-bold text-white">
                 {initials}
               </span>
-              <span>
-                <strong className="block text-[13px] font-semibold">{you.name}</strong>
-                <em className="block font-mono text-[11px] not-italic text-muted">
+              <span className="hidden min-w-0 sm:block">
+                <strong className="block truncate text-[13px] font-semibold">
+                  {you.name}
+                </strong>
+                <em className="block truncate font-mono text-[11px] not-italic text-muted">
                   {you.handle}
                 </em>
               </span>
             </Link>
-            <button type="button" className={tw.btn} onClick={() => void logout()}>
+            <button
+              type="button"
+              className={cx(tw.btn, "shrink-0")}
+              onClick={() => void logout()}
+            >
               Log out
             </button>
           </div>

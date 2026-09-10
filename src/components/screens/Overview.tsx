@@ -13,8 +13,7 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { CopyHandle, CopyPayLink } from "@/components/CopyHandle";
-import { PayQr } from "@/components/PayQr";
+import { CopyHandle } from "@/components/CopyHandle";
 import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
 import { formatTxTime, greeting, money } from "@/lib/money";
@@ -42,26 +41,22 @@ export function Overview() {
   ];
 
   return (
-    <section>
-      <div className="mb-[22px] flex items-start justify-between gap-4">
-        <div>
+    <section className="min-w-0">
+      <div className="mb-[22px] flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className={tw.hello}>
             {hello}, {account.firstName} !
           </h1>
           <p className={tw.sub}>Here&apos;s what&apos;s happening with AutoWallet today.</p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <CopyHandle
-            handle={account.handle}
-            className="h-[42px] rounded-xl px-4"
-          />
-          <CopyPayLink
             handle={account.handle}
             className="h-[42px] rounded-xl px-4"
           />
           <button
             type="button"
-            className={cx(tw.btnPrimary, "h-[42px] shrink-0 rounded-xl px-4")}
+            className={cx(tw.btnPrimary, "h-[42px] rounded-xl px-4")}
             onClick={() => router.push("/send")}
           >
             <ArrowLeftRight size={16} />
@@ -159,8 +154,7 @@ export function Overview() {
           </div>
           {people.length === 0 ? (
             <p className={cx(tw.muted, "mb-0 border-t border-line pt-3 text-sm")}>
-              No one yet. Copy your handle or pay link, or show the QR so
-              someone can send to you.
+              No one yet. Copy your handle so someone can send to you.
             </p>
           ) : (
             people.map((person) => (
@@ -192,78 +186,122 @@ export function Overview() {
             live={!you.locked}
             onManage={() => router.push("/send")}
           />
-          <PayQr handle={account.handle} />
         </div>
       </div>
 
       <div className={tw.ovSplit}>
         <article className={tw.card}>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="m-0 text-base font-semibold">Recent Payment Activity</h2>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="m-0 min-w-0 text-base font-semibold">
+              Recent activity
+            </h2>
             <button
               type="button"
-              className={tw.textBtn}
+              className={cx(tw.textBtn, "shrink-0")}
               onClick={() => router.push("/activity")}
             >
               View all
             </button>
           </div>
-          <table className="w-full border-collapse text-[13px]">
-            <thead>
-              <tr>
-                {["Time", "From", "To", "Amount", "Memo", "Status", ""].map((h) => (
-                  <th
-                    key={h}
-                    className="pr-2 pb-2.5 text-left text-[11px] font-semibold text-muted"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {recent.length === 0 ? (
-                <tr>
-                  <td className={cx(tw.muted, "border-t border-line py-2.5 pr-2")} colSpan={7}>
-                    No person-to-person sends yet.
-                  </td>
-                </tr>
-              ) : (
-                recent.map((tx) => {
+          {recent.length === 0 ? (
+            <p className={cx(tw.muted, "mb-0 border-t border-line pt-3")}>
+              No person-to-person sends yet.
+            </p>
+          ) : (
+            <>
+              <ul className={cx(tw.pay, "border-0 shadow-none md:hidden")}>
+                {recent.map((tx) => {
                   const settled = (tx.status ?? "settled") === "settled";
                   return (
-                    <tr key={tx.id}>
-                      <td className={cx(tw.muted, "border-t border-line py-2.5 pr-2")}>
-                        {formatTxTime(tx.at)}
-                      </td>
-                      <td className="border-t border-line py-2.5 pr-2 font-mono text-[13px] text-muted">
-                        {tx.fromHandle}
-                      </td>
-                      <td className="border-t border-line py-2.5 pr-2 font-mono text-[13px] text-muted">
-                        {tx.toHandle}
-                      </td>
-                      <td className="border-t border-line py-2.5 pr-2">
-                        {money(tx.amountUsd)}
-                      </td>
-                      <td className={cx(tw.muted, "border-t border-line py-2.5 pr-2")}>
-                        {tx.memo}
-                      </td>
-                      <td className="border-t border-line py-2.5 pr-2">
-                        <em className={settled ? tw.pillOk : tw.pillBad}>
-                          {settled ? "Settled" : "Blocked"}
+                    <li key={tx.id} className={tw.payItem}>
+                      <Link
+                        href={`/activity/${tx.id}`}
+                        className="contents text-foreground no-underline"
+                      >
+                        <span className="min-w-0">
+                          <span className="break-all font-mono text-[13px]">
+                            {tx.fromHandle} → {tx.toHandle}
+                          </span>
+                          <span className={cx(tw.muted, "block text-xs")}>
+                            {tx.memo} · {formatTxTime(tx.at)}
+                          </span>
+                        </span>
+                        <b className={tw.amt}>{money(tx.amountUsd)}</b>
+                        <em className={settled ? tw.ok : tw.bad}>
+                          {settled ? "✓ Settled" : "✕ Blocked"}
                         </em>
-                      </td>
-                      <td className="border-t border-line py-2.5 pr-2">
-                        <Link href={`/activity/${tx.id}`} className={tw.textBtn}>
-                          Receipt
-                        </Link>
-                      </td>
-                    </tr>
+                      </Link>
+                    </li>
                   );
-                })
-              )}
-            </tbody>
-          </table>
+                })}
+              </ul>
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full min-w-[640px] border-collapse text-[13px]">
+                  <thead>
+                    <tr>
+                      {["Time", "From", "To", "Amount", "Memo", "Status", "Receipt"].map(
+                        (h) => (
+                          <th
+                            key={h}
+                            className="pr-2 pb-2.5 text-left text-[11px] font-semibold whitespace-nowrap text-muted"
+                          >
+                            {h}
+                          </th>
+                        ),
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recent.map((tx) => {
+                      const settled = (tx.status ?? "settled") === "settled";
+                      return (
+                        <tr key={tx.id}>
+                          <td
+                            className={cx(
+                              tw.muted,
+                              "border-t border-line py-2.5 pr-2 whitespace-nowrap",
+                            )}
+                          >
+                            {formatTxTime(tx.at)}
+                          </td>
+                          <td className="border-t border-line py-2.5 pr-2 font-mono text-[13px] whitespace-nowrap text-muted">
+                            {tx.fromHandle}
+                          </td>
+                          <td className="border-t border-line py-2.5 pr-2 font-mono text-[13px] whitespace-nowrap text-muted">
+                            {tx.toHandle}
+                          </td>
+                          <td className="border-t border-line py-2.5 pr-2 whitespace-nowrap">
+                            {money(tx.amountUsd)}
+                          </td>
+                          <td
+                            className={cx(
+                              tw.muted,
+                              "border-t border-line py-2.5 pr-2",
+                            )}
+                          >
+                            {tx.memo}
+                          </td>
+                          <td className="border-t border-line py-2.5 pr-2">
+                            <em className={settled ? tw.pillOk : tw.pillBad}>
+                              {settled ? "Settled" : "Blocked"}
+                            </em>
+                          </td>
+                          <td className="border-t border-line py-2.5 pr-2 whitespace-nowrap">
+                            <Link
+                              href={`/activity/${tx.id}`}
+                              className={tw.textBtn}
+                            >
+                              Receipt
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </article>
 
         <div className="grid gap-3.5">

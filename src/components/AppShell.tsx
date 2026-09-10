@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   ArrowLeftRight,
@@ -16,6 +16,7 @@ import { useState } from "react";
 import { CloudMark } from "@/components/CloudMark";
 import { DemoBanner } from "@/components/DemoBanner";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ScanPayQr } from "@/components/ScanPayQr";
 import { useWallet } from "@/context/WalletProvider";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
@@ -39,6 +40,7 @@ function isOn(href: string, path: string) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const router = useRouter();
   const { account, you } = useWallet();
   const [menuOpen, setMenuOpen] = useState(false);
   const initials = (you?.name ?? account.owner)
@@ -120,6 +122,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-2.5">
             <NotificationBell />
+            <ScanPayQr
+              variant="icon"
+              disabled={Boolean(you.locked)}
+              onFound={(handle) =>
+                router.push(`/send?to=${encodeURIComponent(handle)}`)
+              }
+            />
             <Link
               href="/settings"
               className="flex min-w-0 items-center gap-2 rounded-xl py-1 pr-1 pl-1 text-foreground no-underline sm:gap-2.5 sm:pr-2"

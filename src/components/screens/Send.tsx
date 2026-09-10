@@ -6,6 +6,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { useWallet } from "@/context/WalletProvider";
 import { CopyHandle } from "@/components/CopyHandle";
 import { RequestMoney } from "@/components/RequestMoney";
+import { ScanPayQr } from "@/components/ScanPayQr";
 import { completeHandle } from "@/lib/ledger-types";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
@@ -122,6 +123,20 @@ export function Send() {
     }
   }
 
+  async function onScanned(handle: string) {
+    setTo(handle);
+    setError("");
+    setPending(true);
+    try {
+      const result = await lookup(handle);
+      if (!result.ok) setError(result.reason);
+    } catch {
+      setError("Could not look up that handle.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function pickRecent(handle: string) {
     setTo(handle);
     setError("");
@@ -145,7 +160,7 @@ export function Send() {
       <h1 className={tw.h1}>{mode === "send" ? "Send" : "Request"}</h1>
       <p className={tw.sub}>
         {mode === "send"
-          ? "Type a handle, confirm the name, then send. Recent people come from your own transfers."
+          ? "Type a handle or scan their wallet QR, confirm the name, then send."
           : "Ask someone for money. They get an inbox item and confirm the name before they pay."}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -214,17 +229,23 @@ export function Send() {
         <form className={cx(tw.card, "mt-4")} onSubmit={onContinue}>
           <label className={tw.field}>
             To
-            <input
-              className={tw.control}
-              value={to}
-              onChange={(e) => {
-                setTo(e.target.value);
-                setFound(null);
-              }}
-              placeholder="midas.pay"
-              autoComplete="off"
-              spellCheck={false}
-            />
+            <span className="flex gap-2">
+              <input
+                className={cx(tw.control, "min-w-0 flex-1")}
+                value={to}
+                onChange={(e) => {
+                  setTo(e.target.value);
+                  setFound(null);
+                }}
+                placeholder="midas.pay"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <ScanPayQr
+                disabled={pending || !ledgerReady || Boolean(you.locked)}
+                onFound={(handle) => void onScanned(handle)}
+              />
+            </span>
           </label>
           <label className={cx(tw.field, "mt-3")}>
             Amount

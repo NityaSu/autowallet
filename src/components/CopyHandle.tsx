@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { completeHandle, HANDLE_RE } from "@/lib/ledger-types";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
@@ -60,6 +61,26 @@ function CopyText({
 export function payLinkFor(handle: string, origin = "") {
   const path = `/send?to=${encodeURIComponent(handle)}`;
   return origin ? `${origin}${path}` : path;
+}
+
+export function handleFromPayQr(raw: string, origin = "") {
+  const text = raw.trim();
+  if (!text) return null;
+
+  try {
+    const url = new URL(text, origin || "https://local.invalid");
+    const to = url.searchParams.get("to")?.trim() ?? "";
+    const path = url.pathname.replace(/\/+$/, "") || "/";
+    if (to && path.endsWith("/send")) {
+      const handle = completeHandle(to);
+      return HANDLE_RE.test(handle) ? handle : null;
+    }
+  } catch {
+    // Not a URL — maybe a bare handle.
+  }
+
+  const handle = completeHandle(text);
+  return HANDLE_RE.test(handle) ? handle : null;
 }
 
 export function CopyHandle({

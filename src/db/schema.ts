@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   balanceCents: integer("balance_cents").notNull(),
   kind: text("kind").notNull().default("person"),
+  locked: integer("locked").notNull().default(0),
 });
 
 export const agents = pgTable("agents", {

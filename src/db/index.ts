@@ -66,6 +66,9 @@ async function migrateAndSeed() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS kind text NOT NULL DEFAULT 'person'
   `);
   await db.execute(sql`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS locked integer NOT NULL DEFAULT 0
+  `);
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS transfers (
       id uuid PRIMARY KEY,
       from_user_id uuid NOT NULL REFERENCES users(id),

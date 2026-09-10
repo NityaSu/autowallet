@@ -126,6 +126,21 @@ export async function markAllNotificationsRead(userId: string) {
   return { ok: true as const, marked: updated.length };
 }
 
+export async function notifyWalletLock(input: {
+  userId: string;
+  locked: boolean;
+}) {
+  return createNotification({
+    userId: input.userId,
+    type: input.locked ? "wallet.locked" : "wallet.unlocked",
+    title: input.locked ? "Wallet locked" : "Wallet unlocked",
+    body: input.locked
+      ? "Outgoing sends and paying requests are blocked until you unlock."
+      : "You can send and pay requests again.",
+    href: "/settings",
+  });
+}
+
 export async function notifyWelcome(userId: string, name: string) {
   const balance = money(centsToUsd(SIGNUP_BALANCE_CENTS));
   return createNotification({

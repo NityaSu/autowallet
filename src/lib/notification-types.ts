@@ -13,6 +13,8 @@ export type NotificationType =
   | "transfer.request"
   | "transfer.request.declined"
   | "transfer.request.cancelled"
+  | "wallet.locked"
+  | "wallet.unlocked"
   | "webhook.created";
 
 export type NotificationKind = "account" | "money" | "agent" | "security";
@@ -35,6 +37,9 @@ export function notificationKind(type: NotificationType): NotificationKind {
   }
   if (type === "agent.funded") return "money";
   if (type === "agent.key.created" || type === "agent.key.revoked") {
+    return "security";
+  }
+  if (type === "wallet.locked" || type === "wallet.unlocked") {
     return "security";
   }
   if (type === "webhook.created") return "security";

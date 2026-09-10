@@ -11,7 +11,7 @@ import {
   type TransferInput,
   type TransferResult,
 } from "@/lib/ledger-types";
-import { notifyPersonTransfer, notifyWelcome } from "@/lib/pg-notifications";
+import { notifyPersonTransfer, notifyWalletLock, notifyWelcome } from "@/lib/pg-notifications";
 
 export async function executeTransfer(
   input: TransferInput,
@@ -66,6 +66,10 @@ export async function executeTransfer(
           createdAt: new Date(replay.createdAt).toISOString(),
       };
       return { ok: true as const, replay: true, transfer };
+    }
+
+    if (isPersonLocked(from)) {
+      return { ok: false as const, reason: "Wallet is locked." };
     }
 
     if (from.balanceCents < cents) {
@@ -261,6 +265,29 @@ export async function findUserById(id: string) {
   const db = getDb();
   const [row] = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return row ?? null;
+}
+
+export function isPersonLocked(row: { kind: string; locked: number }) {
+  return row.kind === "person" && row.locked !== 0;
+}
+
+export async function setPersonLocked(userId: string, locked: boolean) {
+  const user = await findUserById(userId);
+  if (!user || user.kind !== "person") {
+    return { ok: false as const, reason: "Account not found." };
+  }
+  const next = locked ? 1 : 0;
+  if (user.locked === next) {
+    return { ok: true as const, replay: true, locked };
+  }
+  const db = getDb();
+  await db.update(users).set({ locked: next }).where(eq(users.id, userId));
+  try {
+    await notifyWalletLock({ userId, locked });
+  } catch {
+    // Inbox write is optional.
+  }
+  return { ok: true as const, replay: false, locked };
 }
 
 export async function createUser(input: {

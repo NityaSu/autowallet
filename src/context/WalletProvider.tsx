@@ -48,6 +48,7 @@ type Store = {
     memo: string;
     idempotencyKey: string;
   }) => Promise<SendResult>;
+  setWalletLocked: (locked: boolean) => Promise<SendResult>;
   account: Account;
   agents: Agent[];
   payments: Payment[];
@@ -96,6 +97,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     name: "",
     handle: "",
     balanceUsd: 0,
+    locked: false,
   });
 
   const refreshLedger = useCallback(async () => {
@@ -167,6 +169,22 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const data = (await res.json()) as { ok: boolean; reason?: string };
       if (!data.ok) return { ok: false, reason: data.reason ?? "Send failed." };
       await refreshLedger();
+      return { ok: true };
+    },
+    [refreshLedger],
+  );
+
+  const setWalletLocked = useCallback(
+    async (locked: boolean): Promise<SendResult> => {
+      const res = await fetch("/api/me/lock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locked }),
+      });
+      const data = (await res.json()) as { ok: boolean; reason?: string };
+      if (!data.ok) return { ok: false, reason: data.reason ?? "Could not update lock." };
+      await refreshLedger();
+      pingNotifications();
       return { ok: true };
     },
     [refreshLedger],
@@ -327,6 +345,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       ledgerError,
       refreshLedger,
       sendToPerson,
+      setWalletLocked,
       account: { ...account, balanceUsd: you.balanceUsd },
       agents,
       payments,
@@ -350,6 +369,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       ledgerError,
       refreshLedger,
       sendToPerson,
+      setWalletLocked,
       account,
       agents,
       payments,

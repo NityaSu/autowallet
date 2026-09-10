@@ -188,7 +188,20 @@ export function RequestPay({ requestId }: { requestId: string }) {
             </div>
           ) : null}
 
-          {isPayer && request.status === "pending" && step === "view" ? (
+          {isPayer && request.status === "pending" && you.locked ? (
+            <p className={cx(tw.note, "mt-4 mb-0")}>
+              Wallet is locked.{" "}
+              <Link href="/settings" className={tw.textBtn}>
+                Unlock in Settings
+              </Link>{" "}
+              to pay.
+            </p>
+          ) : null}
+
+          {isPayer &&
+          request.status === "pending" &&
+          step === "view" &&
+          !you.locked ? (
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -213,7 +226,10 @@ export function RequestPay({ requestId }: { requestId: string }) {
             </div>
           ) : null}
 
-          {isPayer && request.status === "pending" && step === "confirm-pay" ? (
+          {isPayer &&
+          request.status === "pending" &&
+          step === "confirm-pay" &&
+          !you.locked ? (
             <div className="mt-4">
               <p className="m-0 text-base font-semibold">
                 Send {money(request.amountUsd)} to {request.from.name} ·{" "}

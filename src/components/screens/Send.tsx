@@ -167,6 +167,14 @@ export function Send() {
       {ledgerError ? (
         <p className="font-semibold text-bad">{ledgerError}</p>
       ) : null}
+      {you.locked ? (
+        <p className={cx(tw.note, "mt-4")}>
+          Wallet is locked. Incoming and asking still work.{" "}
+          <Link href="/settings" className={tw.textBtn}>
+            Unlock in Settings
+          </Link>
+        </p>
+      ) : null}
 
       {mode === "request" ? (
         <div className="mt-[18px]">
@@ -242,7 +250,7 @@ export function Send() {
           <button
             type="submit"
             className={cx(tw.btnPrimary, "mt-4")}
-            disabled={pending || !ledgerReady}
+            disabled={pending || !ledgerReady || Boolean(you.locked)}
           >
             Continue
           </button>
@@ -262,7 +270,7 @@ export function Send() {
             <button
               type="button"
               className={tw.btnPrimary}
-              disabled={pending || !ledgerReady}
+              disabled={pending || !ledgerReady || Boolean(you.locked)}
               onClick={() => void onConfirm()}
             >
               Send {preview > 0 ? money(preview) : ""} to {found?.name}

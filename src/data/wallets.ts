@@ -7,6 +7,7 @@ export type Person = {
   name: string;
   handle: string;
   balanceUsd: number;
+  locked?: boolean;
 };
 
 export type Transfer = {

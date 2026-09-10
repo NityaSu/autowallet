@@ -24,7 +24,7 @@ import { cx } from "@/lib/tw";
 
 export function Overview() {
   const router = useRouter();
-  const { account, people, transfers } = useWallet();
+  const { account, people, transfers, you } = useWallet();
   const hello = greeting();
 
   const stats = useMemo(
@@ -189,6 +189,7 @@ export function Overview() {
             balanceUsd={account.balanceUsd}
             spentTodayUsd={stats.spentToday}
             receivedTodayUsd={stats.receivedToday}
+            live={!you.locked}
             onManage={() => router.push("/send")}
           />
           <PayQr handle={account.handle} />

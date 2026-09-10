@@ -81,7 +81,7 @@ export function WalletTicket({
                 className={`${styles.statusDot} ${live ? "" : styles.statusPaused}`}
               />
               <span className={styles.statusText}>
-                {live ? "Active" : "Paused"}
+                {live ? "Active" : "Locked"}
               </span>
             </div>
           </div>

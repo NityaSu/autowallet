@@ -250,37 +250,22 @@ export const paymentSeed: Payment[] = [
 export const labSteps: LabStep[] = [
   {
     id: 1,
-    label: "Request",
-    detail: "Agent SDK hits the paid route with a normal GET.",
+    label: "POST /api/pay",
+    detail: "Browser session or Bearer ak_… — same endpoint.",
   },
   {
     id: 2,
-    label: "HTTP 402",
-    detail: "Origin returns Payment Required plus machine-readable terms.",
+    label: "Policy",
+    detail: "Pause, allowlist, per-request max, daily cap, then balance.",
   },
   {
     id: 3,
-    label: "Intercept",
-    detail: "wrapFetchWithPayment (or your proxy) catches the challenge.",
+    label: "Settle or 402",
+    detail: "Allow writes a transfer to the vendor. Deny writes a blocked receipt.",
   },
   {
     id: 4,
-    label: "Policy",
-    detail: "Virtual wallet checks pause, allowlist, per-request, daily cap.",
-  },
-  {
-    id: 5,
-    label: "Sign",
-    detail: "Agent key signs PAYMENT-SIGNATURE. Handle is attached as identity.",
-  },
-  {
-    id: 6,
-    label: "Settle",
-    detail: "Facilitator verifies + broadcasts. This PoC mocks that rail.",
-  },
-  {
-    id: 7,
-    label: "200 OK",
-    detail: "Retry succeeds. Resource body returns. Ledger records spend.",
+    label: "Receipt",
+    detail: "Ledger row stays after refresh. Nothing hits a live OpenAI rail.",
   },
 ];

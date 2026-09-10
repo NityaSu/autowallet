@@ -17,9 +17,8 @@ Ledger is Postgres in production (Neon or any `DATABASE_URL`). Locally it is a P
 
 ## What is still mocked
 
-The APIs lab’s “facilitator verify + settle” step. Policy decides; nothing hits a real 402 rail.
-
-Login/signup rate limits are an in-process map. Fine for a demo. Wrong under multiple serverless isolates.
+Catalog hosts are labels — policy runs here, those APIs are not called.
+Login rate limits live in one process (not shared across serverless instances).
 
 ## Try it
 
@@ -38,6 +37,14 @@ Demo logins, password `demo`:
 | `midas.pay` | Midas Wang | $24.00 |
 
 Sunik owns two seeded agents. Research Agent (`research-agent.pay`) may call `api.search.com`, `api.openai.com`, and `data.example.com`.
+
+With the app running, a script pays **without a browser** — it issues an `ak_…` key, `POST /api/pay` for Search (settle) and `unknown` (402), then revokes the key:
+
+```bash
+npm run agent:pay
+```
+
+Or set `AGENT_KEY=ak_…` and `AW_URL=http://127.0.0.1:3000` if you already copied a key from the agent page.
 
 Login, then list agents and copy Research Agent’s `id`:
 
@@ -73,7 +80,7 @@ curl -sS -b /tmp/aw.cookies -X POST http://localhost:3000/api/pay \
   }'
 ```
 
-Same endpoint with `Authorization: Bearer ak_…` after you issue a key from the agent page or `POST /api/agents/:id/keys`. The token is shown once; only the SHA-256 hash is stored.
+Same endpoint with `Authorization: Bearer ak_…` after you issue a key from the agent page or `POST /api/agents/:id/keys`. The token is shown once; only the SHA-256 hash is stored. `npm run agent:pay` is that path.
 
 Hard-refresh the UI. The transfer and the payment receipt are still there.
 
@@ -86,5 +93,3 @@ Evaluated in this order: paused → host allowlist → per-request max → daily
 1. Postgres (`DATABASE_URL`).
 2. `AUTH_SECRET` — long random string, not the `.env.example` default. Production refuses to boot without it.
 3. Deploy the Next.js app. First request creates tables and seeds the demo users.
-
-This is a portfolio ledger, not a payments company. Fork it to learn how money and policy stay honest when the UI is gone.

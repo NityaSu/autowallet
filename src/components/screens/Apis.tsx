@@ -8,10 +8,6 @@ import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
 export function Apis() {
   const { agents, apis, attemptPay } = useWallet();
   const [agentId, setAgentId] = useState(
@@ -38,7 +34,7 @@ export function Apis() {
     if (running || !agent || !api) return;
     setRunning(true);
     setDenied(false);
-    setStep(0);
+    setStep(1);
     setLog([]);
     setVerdict("");
     setLastPaymentId("");
@@ -49,34 +45,22 @@ export function Apis() {
       setLog([...lines]);
     };
 
-    push(`GET https://${api.host}${api.path}`);
-    setStep(1);
-    await sleep(320);
-    push(`← 402 PAYMENT-REQUIRED  ${money(api.priceUsd)}`);
+    push(`POST /api/pay`);
+    push(`as ${agent.handle} (browser session)`);
+    push(`apiId=${api.id} · ${money(api.priceUsd)}`);
     setStep(2);
-    await sleep(360);
-    push(`interceptor caught 402 · ${agent.handle}`);
-    setStep(3);
-    await sleep(300);
     const result = await attemptPay(agent.id, api.id);
-    setStep(4);
-    push(result.ok ? `policy ALLOW · ${result.reason}` : `policy DENY · ${result.reason}`);
+    setStep(3);
     if (result.paymentId) setLastPaymentId(result.paymentId);
-    await sleep(380);
     if (!result.ok) {
+      push(`← 402 ${result.reason}`);
       setDenied(true);
       setVerdict(result.reason);
       setRunning(false);
       return;
     }
-    push(`sign PAYMENT-SIGNATURE as ${agent.handle}`);
-    setStep(5);
-    await sleep(300);
-    push("facilitator verify + settle (mock rail)");
-    setStep(6);
-    await sleep(340);
-    push(`← 200 OK  ${api.payload}`);
-    setStep(7);
+    push(`← 200 settle · ${result.reason}`);
+    setStep(4);
     setVerdict(result.reason);
     setRunning(false);
   }
@@ -87,7 +71,10 @@ export function Apis() {
     <section className={tw.page}>
       <h1 className={tw.h1}>APIs</h1>
       <p className={tw.sub}>
-        Paid endpoints return HTTP 402. The agent pays only if policy allows it.
+        Catalog prices for the demo. Pay is real on the ledger: session here, or{" "}
+        <code className="font-mono text-[13px]">npm run agent:pay</code> with an{" "}
+        <code className="font-mono text-[13px]">ak_</code> key. Nothing calls live
+        OpenAI.
       </p>
       <div className={cx(tw.list, "mb-[22px]")}>
         {apis.map((item) => (
@@ -106,7 +93,7 @@ export function Apis() {
           </article>
         ))}
       </div>
-      <h2 className={tw.h2}>402 Lab</h2>
+      <h2 className={tw.h2}>Pay lab</h2>
       <div className={tw.grid2}>
         <article className={tw.card}>
           <label className={tw.field}>
@@ -124,7 +111,7 @@ export function Apis() {
             </select>
           </label>
           <label className={cx(tw.field, "mt-3")}>
-            Paid API
+            Catalog API
             <select
               className={tw.control}
               value={apiId}
@@ -142,21 +129,23 @@ export function Apis() {
             type="button"
             className={tw.btnPrimary}
             disabled={running}
-            onClick={fire}
+            onClick={() => void fire()}
           >
-            {running ? "Paying…" : "Fire request"}
+            {running ? "Paying…" : "POST /api/pay"}
           </button>
           <pre className={tw.log}>
-            {log.length ? log.join("\n") : "// waiting for a request"}
+            {log.length ? log.join("\n") : "// waiting — or run npm run agent:pay"}
           </pre>
           {verdict ? (
             <p className={cx(denied ? tw.bad : tw.ok, "mt-2.5")}>
-              {denied ? "Blocked" : step === 7 ? "Settled" : "Checking"} ·{" "}
-              {verdict}
+              {denied ? "Blocked" : "Settled"} · {verdict}
             </p>
           ) : null}
           {lastPaymentId ? (
-            <Link href={`/payments/${lastPaymentId}`} className={cx(tw.textBtn, "mt-2 inline-block")}>
+            <Link
+              href={`/payments/${lastPaymentId}`}
+              className={cx(tw.textBtn, "mt-2 inline-block")}
+            >
               View payment receipt →
             </Link>
           ) : null}
@@ -167,7 +156,7 @@ export function Apis() {
               key={s.id}
               className={cx(
                 tw.card,
-                denied && s.id >= 5 && "opacity-40",
+                denied && s.id >= 4 && "opacity-40",
                 step === s.id && "border-brand",
               )}
             >

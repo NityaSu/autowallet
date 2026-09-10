@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "agent:pay": "node scripts/agent-pay.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

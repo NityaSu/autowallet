@@ -35,6 +35,7 @@ export async function GET() {
         name: me.name,
         handle: me.handle,
         balanceUsd: centsToUsd(me.balanceCents),
+        locked: Boolean(me.locked),
       },
       recipients,
       people: recipients,

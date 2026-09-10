@@ -8,7 +8,6 @@ import {
   Bot,
   Globe,
   LayoutDashboard,
-  Search,
   Settings,
   Shield,
   Wallet,
@@ -101,23 +100,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="mt-3 rounded-xl border border-line bg-[#fafbfc] p-3">
           <span className="text-[11px] tracking-wider text-muted uppercase">
-            Your Plan
+            Balance
           </span>
-          <b className="mt-1 mb-2.5 block text-brand">Developer</b>
-          <div className="h-1.5 overflow-hidden rounded-full bg-[#eceff3]">
-            <i className="block h-full w-[49.6%] bg-brand" />
-          </div>
-          <p className="mt-2 mb-2.5 text-xs text-muted">
-            {money(you.balanceUsd)} P2P · demo
-          </p>
-          <button type="button" className={cx(tw.btnAccent, "w-full")}>
-            Upgrade
-          </button>
-        </div>
-        <div className="mt-2.5 flex flex-wrap gap-2.5 px-1 text-[11px] text-muted">
-          <span>Docs</span>
-          <span>Help</span>
-          <span>API Reference</span>
+          <b className="mt-1 block text-brand">{money(you.balanceUsd)}</b>
+          <p className="mt-1 mb-0 text-xs text-muted">{you.handle}</p>
         </div>
       </aside>
 
@@ -132,17 +118,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             Menu
           </button>
-          <label className="mx-auto hidden h-10 max-w-[420px] flex-1 items-center gap-2 rounded-xl bg-background px-3 text-muted lg:flex">
-            <Search size={15} />
-            <input
-              type="search"
-              placeholder="Search anything..."
-              className="flex-1 border-0 bg-transparent font-sans text-foreground outline-none"
-            />
-            <kbd className="rounded-md border border-line bg-white px-1.5 py-0.5 font-mono text-[11px]">
-              ⌘K
-            </kbd>
-          </label>
           <div className="ml-auto flex items-center gap-2.5">
             <NotificationBell />
             <Link

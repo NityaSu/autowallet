@@ -176,7 +176,7 @@ export function Overview() {
           )}
         </article>
 
-        <div>
+        <div className="order-first xl:order-none">
           <WalletTicket
             owner={account.owner}
             handle={account.handle}

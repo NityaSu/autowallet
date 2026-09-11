@@ -197,7 +197,7 @@ export function Send() {
         </div>
       ) : (
         <>
-      <div className={cx(tw.stats, "mt-[18px]")}>
+      <div className="mb-4 mt-[18px] grid grid-cols-1 gap-3.5 xl:grid-cols-4">
         <article className={tw.stat}>
           <div>
             <span className="block text-xs font-semibold text-muted">You</span>

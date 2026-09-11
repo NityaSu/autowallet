@@ -51,8 +51,8 @@ export const pillBad =
 export const note =
   "mt-[18px] rounded-xl border border-[#f3d2b0] bg-soft px-4 py-3.5 text-sm leading-relaxed text-foreground";
 export const stat =
-  "flex justify-between gap-3 rounded-2xl border border-line bg-white p-[18px]";
-export const stats = "mb-4 grid grid-cols-1 gap-3.5 xl:grid-cols-4";
+  "flex justify-between gap-2 rounded-2xl border border-line bg-white p-3.5 sm:gap-3 sm:p-[18px]";
+export const stats = "mb-4 grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-3.5";
 export const agent = "flex flex-col gap-2.5";
 export const agentHead = "flex items-start justify-between gap-3";
 export const who = "flex items-center gap-3";

@@ -260,4 +260,66 @@ describe("payment requests", () => {
     },
     20000,
   );
+
+  it(
+    "pay vs cancel cannot both move money and close unpaid",
+    async () => {
+      await ensureDb();
+      const stamp = Date.now().toString(36);
+      const from = await createUser({
+        name: "Ada Race",
+        handle: `ada-race-${stamp}.pay`,
+        password: "demo",
+      });
+      const to = await createUser({
+        name: "Bob Race",
+        handle: `bob-race-${stamp}.pay`,
+        password: "demo",
+      });
+      expect(from.ok && to.ok).toBe(true);
+      if (!from.ok || !to.ok) return;
+
+      for (let i = 0; i < 8; i += 1) {
+        const asked = await createPaymentRequest(from.user.id, {
+          toHandle: to.user.handle,
+          amountUsd: 3,
+          memo: `race-${i}`,
+        });
+        expect(asked.ok).toBe(true);
+        if (!asked.ok) return;
+
+        const askerBefore = await findUserById(from.user.id);
+        const payerBefore = await findUserById(to.user.id);
+        const [paid, cancelled] = await Promise.all([
+          payPaymentRequest(to.user.id, asked.request.id),
+          cancelPaymentRequest(from.user.id, asked.request.id),
+        ]);
+        const loaded = await getPaymentRequestForUser(
+          asked.request.id,
+          from.user.id,
+        );
+        expect(loaded.ok).toBe(true);
+        if (!loaded.ok) return;
+
+        const asker = await findUserById(from.user.id);
+        const payer = await findUserById(to.user.id);
+        const moved =
+          asker!.balanceCents === askerBefore!.balanceCents + 300 &&
+          payer!.balanceCents === payerBefore!.balanceCents - 300;
+        const untouched =
+          asker!.balanceCents === askerBefore!.balanceCents &&
+          payer!.balanceCents === payerBefore!.balanceCents;
+
+        if (loaded.request.status === "paid") {
+          expect(paid.ok).toBe(true);
+          expect(moved).toBe(true);
+        } else {
+          expect(loaded.request.status).toBe("cancelled");
+          expect(cancelled.ok).toBe(true);
+          expect(untouched).toBe(true);
+        }
+      }
+    },
+    30000,
+  );
 });

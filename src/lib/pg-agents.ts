@@ -3,13 +3,14 @@ import { and, count, desc, eq, gte, lte } from "drizzle-orm";
 import { agentPayments, agents, getDb, transfers, users } from "@/db";
 import { getApiById, vendorHandleForApi } from "@/lib/api-vendors";
 import { centsToUsd, usdToCents } from "@/lib/cents";
-import { executeTransfer, findUserByHandle, findUserById } from "@/lib/pg-ledger";
+import { applyTransfer, executeTransfer, findUserByHandle, findUserById } from "@/lib/pg-ledger";
 import { evaluatePolicy, type AgentStatus } from "@/lib/policy";
 import {
   notifyAgentCreated,
   notifyAgentFunded,
   notifyAgentPayment,
   notifyAgentStatus,
+  notifyPersonTransfer,
 } from "@/lib/pg-notifications";
 import { notifyPaymentWebhooks, type PaymentWebhookPayload } from "@/lib/pg-webhooks";
 
@@ -620,80 +621,100 @@ export async function attemptAgentPay(
   const loaded = await loadAgentForOwner(agentUserId, ownerUserId);
   if (!loaded) return { ok: false as const, reason: "Agent not found." };
 
-  const row = await ensureSpentToday(loaded.row);
-  const agentDto = toAgentDto(loaded.user, row);
-  const decision = evaluatePolicy(agentDto, {
-    host: api.host,
-    priceUsd: api.priceUsd,
-  });
-
   const db = getDb();
   const paymentId = crypto.randomUUID();
   const amountCents = usdToCents(api.priceUsd)!;
-
-  if (!decision.ok) {
-    await db.insert(agentPayments).values({
-      id: paymentId,
-      agentUserId,
-      ownerUserId,
-      apiId,
-      apiName: api.name,
-      host: api.host,
-      amountCents,
-      status: "blocked",
-      reason: decision.reason,
-    });
-    announceAgentPayment(ownerUserId, loaded.user.name, {
-      paymentId,
-      agentId: agentUserId,
-      apiId,
-      apiName: api.name,
-      host: api.host,
-      amountCents,
-      status: "blocked",
-      reason: decision.reason,
-      transferId: null,
-    });
-    return { ok: false as const, reason: decision.reason, paymentId };
-  }
-
-  if (loaded.user.balanceCents < amountCents) {
-    const reason = "insufficient virtual wallet balance";
-    await db.insert(agentPayments).values({
-      id: paymentId,
-      agentUserId,
-      ownerUserId,
-      apiId,
-      apiName: api.name,
-      host: api.host,
-      amountCents,
-      status: "blocked",
-      reason,
-    });
-    announceAgentPayment(ownerUserId, loaded.user.name, {
-      paymentId,
-      agentId: agentUserId,
-      apiId,
-      apiName: api.name,
-      host: api.host,
-      amountCents,
-      status: "blocked",
-      reason,
-      transferId: null,
-    });
-    return { ok: false as const, reason, paymentId };
-  }
-
   const key = input.idempotencyKey?.trim() || crypto.randomUUID();
-  const transfer = await executeTransfer({
-    fromHandle: loaded.user.handle,
-    toHandle: vendorHandle,
-    amountUsd: api.priceUsd,
-    memo: `402 pay · ${api.name}`,
-    idempotencyKey: key,
-  });
-  if (!transfer.ok) {
-    await db.insert(agentPayments).values({
+
+  const outcome = await db.transaction(async (tx) => {
+    const [locked] = await tx
+      .select()
+      .from(agents)
+      .where(
+        and(eq(agents.userId, agentUserId), eq(agents.ownerUserId, ownerUserId)),
+      )
+      .for("update")
+      .limit(1);
+    if (!locked) return { ok: false as const, reason: "Agent not found." };
+
+    const today = todayKey();
+    const spentRow =
+      locked.spentOn === today
+        ? locked
+        : { ...locked, spentTodayCents: 0, spentOn: today };
+    if (locked.spentOn !== today) {
+      await tx
+        .update(agents)
+        .set({ spentTodayCents: 0, spentOn: today })
+        .where(eq(agents.userId, agentUserId));
+    }
+
+    const [agentUser] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, agentUserId))
+      .limit(1);
+    if (!agentUser) return { ok: false as const, reason: "Agent not found." };
+
+    const decision = evaluatePolicy(toAgentDto(agentUser, spentRow), {
+      host: api.host,
+      priceUsd: api.priceUsd,
+    });
+
+    const blocked = (reason: string) => ({
+      ok: false as const,
+      reason,
+      paymentId,
+      agentName: agentUser.name,
+      status: "blocked" as const,
+      transferId: null as string | null,
+    });
+
+    if (!decision.ok) {
+      await tx.insert(agentPayments).values({
+        id: paymentId,
+        agentUserId,
+        ownerUserId,
+        apiId,
+        apiName: api.name,
+        host: api.host,
+        amountCents,
+        status: "blocked",
+        reason: decision.reason,
+      });
+      return blocked(decision.reason);
+    }
+
+    const transfer = await applyTransfer(tx, {
+      fromHandle: agentUser.handle,
+      toHandle: vendorHandle,
+      amountUsd: api.priceUsd,
+      memo: `402 pay · ${api.name}`,
+      idempotencyKey: key,
+    });
+    if (!transfer.ok) {
+      await tx.insert(agentPayments).values({
+        id: paymentId,
+        agentUserId,
+        ownerUserId,
+        apiId,
+        apiName: api.name,
+        host: api.host,
+        amountCents,
+        status: "blocked",
+        reason: transfer.reason,
+      });
+      return blocked(transfer.reason);
+    }
+
+    if (!transfer.replay) {
+      await tx
+        .update(agents)
+        .set({ spentTodayCents: spentRow.spentTodayCents + amountCents })
+        .where(eq(agents.userId, agentUserId));
+    }
+
+    await tx.insert(agentPayments).values({
       id: paymentId,
       agentUserId,
       ownerUserId,
@@ -701,54 +722,47 @@ export async function attemptAgentPay(
       apiName: api.name,
       host: api.host,
       amountCents,
-      status: "blocked",
-      reason: transfer.reason,
+      status: "settled",
+      reason: decision.reason,
+      transferId: transfer.transfer.id,
     });
-    announceAgentPayment(ownerUserId, loaded.user.name, {
+
+    return {
+      ok: true as const,
+      reason: decision.reason,
       paymentId,
-      agentId: agentUserId,
-      apiId,
-      apiName: api.name,
-      host: api.host,
-      amountCents,
-      status: "blocked",
-      reason: transfer.reason,
-      transferId: null,
-    });
-    return { ok: false as const, reason: transfer.reason, paymentId };
-  }
-
-  if (!transfer.replay) {
-    await db
-      .update(agents)
-      .set({ spentTodayCents: row.spentTodayCents + amountCents })
-      .where(eq(agents.userId, agentUserId));
-  }
-
-  await db.insert(agentPayments).values({
-    id: paymentId,
-    agentUserId,
-    ownerUserId,
-    apiId,
-    apiName: api.name,
-    host: api.host,
-    amountCents,
-    status: "settled",
-    reason: decision.reason,
-    transferId: transfer.transfer.id,
+      agentName: agentUser.name,
+      status: "settled" as const,
+      transferId: transfer.transfer.id,
+      transfer,
+    };
   });
 
-  announceAgentPayment(ownerUserId, loaded.user.name, {
-    paymentId,
+  if (!("paymentId" in outcome) || !outcome.paymentId) {
+    return { ok: false as const, reason: outcome.reason };
+  }
+
+  announceAgentPayment(ownerUserId, outcome.agentName, {
+    paymentId: outcome.paymentId,
     agentId: agentUserId,
     apiId,
     apiName: api.name,
     host: api.host,
     amountCents,
-    status: "settled",
-    reason: decision.reason,
-    transferId: transfer.transfer.id,
+    status: outcome.status,
+    reason: outcome.reason,
+    transferId: outcome.transferId,
   });
 
-  return { ok: true as const, reason: decision.reason, paymentId };
+  if (outcome.ok && outcome.transfer && !outcome.transfer.replay) {
+    try {
+      await notifyPersonTransfer(outcome.transfer.transfer);
+    } catch {
+      // Inbox write must not roll back a settled pay.
+    }
+  }
+
+  return outcome.ok
+    ? { ok: true as const, reason: outcome.reason, paymentId: outcome.paymentId }
+    : { ok: false as const, reason: outcome.reason, paymentId: outcome.paymentId };
 }

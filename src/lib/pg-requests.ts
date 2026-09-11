@@ -1,9 +1,10 @@
 import { and, desc, eq } from "drizzle-orm";
 import { getDb, paymentRequests, users } from "@/db";
 import { centsToUsd, usdToCents } from "@/lib/cents";
-import { executeTransfer, findUserById, lookupPerson } from "@/lib/pg-ledger";
+import { applyTransfer, findUserById, lookupPerson } from "@/lib/pg-ledger";
 import {
   notifyPaymentRequest,
+  notifyPersonTransfer,
   notifyRequestCancelled,
   notifyRequestDeclined,
 } from "@/lib/pg-notifications";
@@ -188,17 +189,23 @@ async function closePaymentRequest(
   }
 
   const db = getDb();
-  const [updated] = await db
-    .update(paymentRequests)
-    .set({ status: nextStatus })
-    .where(
-      and(
-        eq(paymentRequests.id, request.id),
-        eq(paymentRequests.status, "pending"),
-      ),
-    )
-    .returning();
-  if (!updated) {
+  const updated = await db.transaction(async (tx) => {
+    const [locked] = await tx
+      .select()
+      .from(paymentRequests)
+      .where(eq(paymentRequests.id, request.id))
+      .for("update")
+      .limit(1);
+    if (!locked) return null;
+    if (locked.status !== "pending") return locked;
+    const [row] = await tx
+      .update(paymentRequests)
+      .set({ status: nextStatus })
+      .where(eq(paymentRequests.id, request.id))
+      .returning();
+    return row ?? null;
+  });
+  if (!updated || updated.status !== nextStatus) {
     const raced = await getPaymentRequestForUser(requestId, actorUserId);
     if (!raced.ok) return raced;
     if (raced.request.status === "paid") {
@@ -270,30 +277,57 @@ export async function payPaymentRequest(
   const payer = await findUserById(payerUserId);
   if (!payer) return { ok: false as const, reason: "Account not found." };
 
-  const transfer = await executeTransfer({
-    fromHandle: payer.handle,
-    toHandle: request.from.handle,
-    amountUsd: request.amountUsd,
-    memo: request.memo || "Payment request",
-    idempotencyKey: `request-pay:${request.id}`,
-  });
-  if (!transfer.ok) return transfer;
-
   const db = getDb();
-  await db
-    .update(paymentRequests)
-    .set({
-      status: "paid",
-      transferId: transfer.transfer.id,
-    })
-    .where(
-      and(
-        eq(paymentRequests.id, request.id),
-        eq(paymentRequests.status, "pending"),
-      ),
-    );
+  const settled = await db.transaction(async (tx) => {
+    const [locked] = await tx
+      .select()
+      .from(paymentRequests)
+      .where(eq(paymentRequests.id, request.id))
+      .for("update")
+      .limit(1);
+    if (!locked) {
+      return { ok: false as const, reason: "Request not found." };
+    }
+    if (locked.toUserId !== payerUserId) {
+      return { ok: false as const, reason: "This request is not for you." };
+    }
+    if (locked.status === "paid") {
+      return { ok: true as const, replay: true as const };
+    }
+    if (locked.status !== "pending") {
+      return { ok: false as const, reason: "This request is closed." };
+    }
+
+    const transfer = await applyTransfer(tx, {
+      fromHandle: payer.handle,
+      toHandle: request.from.handle,
+      amountUsd: request.amountUsd,
+      memo: request.memo || "Payment request",
+      idempotencyKey: `request-pay:${request.id}`,
+    });
+    if (!transfer.ok) return transfer;
+
+    await tx
+      .update(paymentRequests)
+      .set({
+        status: "paid",
+        transferId: transfer.transfer.id,
+      })
+      .where(eq(paymentRequests.id, request.id));
+
+    return { ok: true as const, replay: transfer.replay, transfer: transfer.transfer };
+  });
+  if (!settled.ok) return settled;
+
+  if (!settled.replay && settled.transfer) {
+    try {
+      await notifyPersonTransfer(settled.transfer);
+    } catch {
+      // Inbox write must not roll back a settled pay.
+    }
+  }
 
   const refreshed = await getPaymentRequestForUser(requestId, payerUserId);
   if (!refreshed.ok) return refreshed;
-  return { ok: true as const, replay: transfer.replay, request: refreshed.request };
+  return { ok: true as const, replay: settled.replay, request: refreshed.request };
 }

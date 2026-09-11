@@ -13,7 +13,10 @@ import {
 } from "@/lib/ledger-types";
 import { notifyPersonTransfer, notifyWalletLock, notifyWelcome } from "@/lib/pg-notifications";
 
-export async function executeTransfer(
+type LedgerDb = Pick<ReturnType<typeof getDb>, "select" | "insert" | "update">;
+
+export async function applyTransfer(
+  tx: LedgerDb,
   input: TransferInput,
 ): Promise<TransferResult> {
   const shape = validateTransferShape(input);
@@ -24,92 +27,96 @@ export async function executeTransfer(
   const fromHandle = completeHandle(input.fromHandle);
   const toHandle = completeHandle(input.toHandle);
   const key = input.idempotencyKey.trim();
-  const db = getDb();
 
-  const result = await db.transaction(async (tx) => {
-    await tx
-      .select({ id: users.id })
-      .from(users)
-      .where(inArray(users.handle, [fromHandle, toHandle]))
-      .for("update");
+  await tx
+    .select({ id: users.id })
+    .from(users)
+    .where(inArray(users.handle, [fromHandle, toHandle]))
+    .for("update");
 
-    const [from] = await tx
-      .select()
-      .from(users)
-      .where(eq(users.handle, fromHandle))
-      .limit(1);
-    const [to] = await tx
-      .select()
-      .from(users)
-      .where(eq(users.handle, toHandle))
-      .limit(1);
+  const [from] = await tx
+    .select()
+    .from(users)
+    .where(eq(users.handle, fromHandle))
+    .limit(1);
+  const [to] = await tx
+    .select()
+    .from(users)
+    .where(eq(users.handle, toHandle))
+    .limit(1);
 
-    if (!from) return { ok: false as const, reason: "Sender not found." };
-    if (!to) return { ok: false as const, reason: `Nobody at ${toHandle}.` };
+  if (!from) return { ok: false as const, reason: "Sender not found." };
+  if (!to) return { ok: false as const, reason: `Nobody at ${toHandle}.` };
 
-    const [replay] = await tx
-      .select()
-      .from(transfers)
-      .where(
-        and(eq(transfers.fromUserId, from.id), eq(transfers.idempotencyKey, key)),
-      )
-      .limit(1);
+  const [replay] = await tx
+    .select()
+    .from(transfers)
+    .where(
+      and(eq(transfers.fromUserId, from.id), eq(transfers.idempotencyKey, key)),
+    )
+    .limit(1);
 
-    if (replay) {
-      const transfer: LedgerTransfer = {
-        id: replay.id,
-        fromHandle: from.handle,
-        toHandle: to.handle,
-        amountUsd: centsToUsd(replay.amountCents),
-        memo: replay.memo,
-        status: "settled",
-          createdAt: new Date(replay.createdAt).toISOString(),
-      };
-      return { ok: true as const, replay: true, transfer };
-    }
-
-    if (isPersonLocked(from)) {
-      return { ok: false as const, reason: "Wallet is locked." };
-    }
-
-    if (from.balanceCents < cents) {
-      return { ok: false as const, reason: "Not enough balance." };
-    }
-
-    await tx
-      .update(users)
-      .set({ balanceCents: from.balanceCents - cents })
-      .where(eq(users.id, from.id));
-    await tx
-      .update(users)
-      .set({ balanceCents: to.balanceCents + cents })
-      .where(eq(users.id, to.id));
-
-    const id = crypto.randomUUID();
-    const [row] = await tx
-      .insert(transfers)
-      .values({
-        id,
-        fromUserId: from.id,
-        toUserId: to.id,
-        amountCents: cents,
-        memo: input.memo.trim() || "—",
-        idempotencyKey: key,
-        status: "settled",
-      })
-      .returning();
-
+  if (replay) {
     const transfer: LedgerTransfer = {
-      id: row!.id,
+      id: replay.id,
       fromHandle: from.handle,
       toHandle: to.handle,
-      amountUsd: centsToUsd(cents),
-      memo: row!.memo,
+      amountUsd: centsToUsd(replay.amountCents),
+      memo: replay.memo,
       status: "settled",
-      createdAt: new Date(row!.createdAt).toISOString(),
+      createdAt: new Date(replay.createdAt).toISOString(),
     };
-    return { ok: true as const, replay: false, transfer };
-  });
+    return { ok: true as const, replay: true, transfer };
+  }
+
+  if (isPersonLocked(from)) {
+    return { ok: false as const, reason: "Wallet is locked." };
+  }
+
+  if (from.balanceCents < cents) {
+    return { ok: false as const, reason: "Not enough balance." };
+  }
+
+  await tx
+    .update(users)
+    .set({ balanceCents: from.balanceCents - cents })
+    .where(eq(users.id, from.id));
+  await tx
+    .update(users)
+    .set({ balanceCents: to.balanceCents + cents })
+    .where(eq(users.id, to.id));
+
+  const id = crypto.randomUUID();
+  const [row] = await tx
+    .insert(transfers)
+    .values({
+      id,
+      fromUserId: from.id,
+      toUserId: to.id,
+      amountCents: cents,
+      memo: input.memo.trim() || "—",
+      idempotencyKey: key,
+      status: "settled",
+    })
+    .returning();
+
+  const transfer: LedgerTransfer = {
+    id: row!.id,
+    fromHandle: from.handle,
+    toHandle: to.handle,
+    amountUsd: centsToUsd(cents),
+    memo: row!.memo,
+    status: "settled",
+    createdAt: new Date(row!.createdAt).toISOString(),
+  };
+  return { ok: true as const, replay: false, transfer };
+}
+
+export async function executeTransfer(
+  input: TransferInput,
+): Promise<TransferResult> {
+  const db = getDb();
+  const result = await db.transaction((tx) => applyTransfer(tx, input));
 
   if (result.ok && !result.replay) {
     try {

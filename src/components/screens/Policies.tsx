@@ -26,8 +26,8 @@ export function Policies() {
     <section className={tw.page}>
       <h1 className={tw.h1}>Policies</h1>
       <p className={tw.sub}>
-        Daily cap, per-request max, and domain allowlist — the layer x402 does
-        not ship.
+        Daily cap, per-request max, and domain allowlist. Travel Agent may hit
+        hotel and flight hosts — bus is a 402.
       </p>
       <div className="mb-4 flex flex-wrap gap-2">
         {agents.map((agent) => (
@@ -53,7 +53,7 @@ export function Policies() {
             }
             type="range"
             min={0.5}
-            max={50}
+            max={Math.max(50, selected.dailyCapUsd)}
             step={0.5}
           />
         </label>
@@ -69,7 +69,7 @@ export function Policies() {
             }
             type="range"
             min={0.01}
-            max={5}
+            max={Math.max(5, selected.perRequestMaxUsd)}
             step={0.01}
           />
         </label>

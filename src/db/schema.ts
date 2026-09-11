@@ -1,4 +1,5 @@
 import {
+  index,
   integer,
   pgTable,
   text,
@@ -107,7 +108,11 @@ export const transfers = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (table) => [unique("transfers_from_idempotency").on(table.fromUserId, table.idempotencyKey)],
+  (table) => [
+    unique("transfers_from_idempotency").on(table.fromUserId, table.idempotencyKey),
+    index("transfers_to_created").on(table.toUserId, table.createdAt),
+    index("transfers_from_created").on(table.fromUserId, table.createdAt),
+  ],
 );
 
 export const paymentRequests = pgTable("payment_requests", {

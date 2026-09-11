@@ -85,6 +85,14 @@ async function migrateAndSeed() {
     ON transfers (from_user_id, idempotency_key)
   `);
   await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS transfers_to_created
+    ON transfers (to_user_id, created_at DESC)
+  `);
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS transfers_from_created
+    ON transfers (from_user_id, created_at DESC)
+  `);
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS payment_requests (
       id uuid PRIMARY KEY,
       from_user_id uuid NOT NULL REFERENCES users(id),
@@ -175,6 +183,7 @@ async function migrateAndSeed() {
   const midasId = "22222222-2222-2222-2222-222222222222";
   const researchAgentId = "44444444-4444-4444-4444-444444444444";
   const codingAgentId = "55555555-5555-5555-5555-555555555555";
+  const travelAgentId = "66666666-6666-6666-6666-666666666666";
 
   await db
     .update(users)
@@ -209,10 +218,7 @@ async function migrateAndSeed() {
   }
 
   const passwordHash = bcrypt.hashSync("demo", 10);
-  let vendorIdx = 0;
   for (const vendor of VENDOR_SEED) {
-    vendorIdx += 1;
-    const id = `33333333-3333-3333-3333-${String(vendorIdx).padStart(12, "0")}`;
     const [row] = await db
       .select({ id: users.id })
       .from(users)
@@ -220,7 +226,7 @@ async function migrateAndSeed() {
       .limit(1);
     if (!row) {
       await db.insert(users).values({
-        id,
+        id: vendor.id,
         handle: vendor.handle,
         name: vendor.name,
         passwordHash,
@@ -287,6 +293,37 @@ async function migrateAndSeed() {
       spentOn: new Date().toISOString().slice(0, 10),
       fundedCents: 8000,
       publicKey: "0x4b1c…9a02",
+    });
+  }
+
+  const [travelRow] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.handle, "travel-agent.pay"))
+    .limit(1);
+  if (!travelRow) {
+    await db.insert(users).values({
+      id: travelAgentId,
+      handle: "travel-agent.pay",
+      name: "Travel Agent",
+      passwordHash,
+      balanceCents: 40000,
+      kind: "agent",
+    });
+    await db.insert(agents).values({
+      userId: travelAgentId,
+      ownerUserId: sunikId,
+      status: "active",
+      dailyCapCents: 50000,
+      perRequestMaxCents: 20000,
+      allowlist: JSON.stringify([
+        "api.hotels.example",
+        "api.flights.example",
+      ]),
+      spentTodayCents: 0,
+      spentOn: new Date().toISOString().slice(0, 10),
+      fundedCents: 40000,
+      publicKey: "0xa41e…7c08",
     });
   }
 

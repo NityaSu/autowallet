@@ -4,6 +4,7 @@ import { Bot } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SpendBar } from "@/components/SpendBar";
 import { useWallet } from "@/context/WalletProvider";
+import { categoryForHost, categoryLabel } from "@/lib/api-vendors";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
@@ -32,6 +33,18 @@ export function Agents() {
                 <div>
                   <p className={tw.name}>{agent.name}</p>
                   <p className={tw.handle}>{agent.handle}</p>
+                  {agent.allowlist.length > 0 ? (
+                    <p className={cx(tw.muted, "mt-1 mb-0 text-xs")}>
+                      {[
+                        ...new Set(
+                          agent.allowlist
+                            .map((host) => categoryForHost(host))
+                            .filter((c): c is NonNullable<typeof c> => Boolean(c))
+                            .map((c) => categoryLabel(c)),
+                        ),
+                      ].join(" · ") || agent.allowlist.join(" · ")}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <span

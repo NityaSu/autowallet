@@ -36,7 +36,7 @@ Demo logins, password `demo`:
 | `sunik.pay` | Sunik Codes | $82.40 |
 | `midas.pay` | Midas Wang | $24.00 |
 
-Sunik owns two seeded agents. Research Agent (`research-agent.pay`) may call `api.search.com`, `api.openai.com`, and `data.example.com`.
+Sunik owns seeded agents. Research Agent (`research-agent.pay`) may call `api.search.com`, `api.openai.com`, and `data.example.com`. Travel Agent (`travel-agent.pay`) may call `api.hotels.example` and `api.flights.example` — not `api.buses.example`.
 
 With the app running, a script pays **without a browser** — it issues an `ak_…` key, `POST /api/pay` for Search (settle) and `unknown` (402), then revokes the key:
 
@@ -80,13 +80,39 @@ curl -sS -b /tmp/aw.cookies -X POST http://localhost:3000/api/pay \
   }'
 ```
 
+Travel Agent: copy its `id` from `GET /api/agents`, then hotel settles and bus is 402.
+
+**Settle** — Hotel hold is $89 and on Travel Agent’s allowlist:
+
+```bash
+curl -sS -b /tmp/aw.cookies -X POST http://localhost:3000/api/pay \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "agentId": "<travel-agent id>",
+    "apiId": "hotel",
+    "idempotencyKey": "readme-hotel-1"
+  }'
+```
+
+**Block** — `bus` is not on Travel Agent. Expect HTTP 402:
+
+```bash
+curl -sS -b /tmp/aw.cookies -X POST http://localhost:3000/api/pay \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "agentId": "<travel-agent id>",
+    "apiId": "bus",
+    "idempotencyKey": "readme-bus-1"
+  }'
+```
+
 Same endpoint with `Authorization: Bearer ak_…` after you issue a key from the agent page or `POST /api/agents/:id/keys`. The token is shown once; only the SHA-256 hash is stored. `npm run agent:pay` is that path.
 
 Hard-refresh the UI. The transfer and the payment receipt are still there.
 
 ## Policy
 
-Evaluated in this order: paused → host allowlist → per-request max → daily cap. A deny still writes a payment row. A settle writes a transfer to the vendor account (`search-api.pay`, `llm-api.pay`, …).
+Evaluated in this order: paused → host allowlist → per-request max → daily cap. A deny still writes a payment row. A settle writes a transfer to the vendor account (`hotel-api.pay`, `search-api.pay`, …).
 
 ## Deploy
 

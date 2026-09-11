@@ -4,16 +4,21 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { labSteps } from "@/data/wallets";
 import { useWallet } from "@/context/WalletProvider";
+import { catalogByCategory, categoryLabel } from "@/lib/api-vendors";
 import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
 export function Apis() {
   const { agents, apis, attemptPay } = useWallet();
+  const groups = catalogByCategory();
   const [agentId, setAgentId] = useState(
-    agents.find((a) => a.status === "active")?.id ?? agents[0]?.id ?? "",
+    agents.find((a) => a.handle === "travel-agent.pay")?.id ??
+      agents.find((a) => a.status === "active")?.id ??
+      agents[0]?.id ??
+      "",
   );
-  const [apiId, setApiId] = useState(apis[0]?.id ?? "");
+  const [apiId, setApiId] = useState("hotel");
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState(0);
   const [denied, setDenied] = useState(false);
@@ -71,28 +76,31 @@ export function Apis() {
     <section className={tw.page}>
       <h1 className={tw.h1}>APIs</h1>
       <p className={tw.sub}>
-        Catalog prices for the demo. Pay is real on the ledger: session here, or{" "}
-        <code className="font-mono text-[13px]">npm run agent:pay</code> with an{" "}
-        <code className="font-mono text-[13px]">ak_</code> key. Nothing calls live
-        OpenAI.
+        Demo merchants. Travel Agent may book hotel and flight; bus is off the
+        allowlist. Pay is real on the ledger — nothing calls a live airline.
       </p>
-      <div className={cx(tw.list, "mb-[22px]")}>
-        {apis.map((item) => (
-          <article key={item.id} className={tw.card}>
-            <div className={tw.row}>
-              <div>
-                <h3 className={tw.name}>{item.name}</h3>
-                <p className={tw.handle}>
-                  {item.host}
-                  {item.path}
-                </p>
-              </div>
-              <b>{money(item.priceUsd)}</b>
-            </div>
-            <p className={cx(tw.muted, "mt-2")}>{item.description}</p>
-          </article>
-        ))}
-      </div>
+      {groups.map((group) => (
+        <div key={group.category} className="mb-[22px]">
+          <h2 className={cx(tw.h2, "mt-0")}>{group.label}</h2>
+          <div className={tw.list}>
+            {group.items.map((item) => (
+              <article key={item.id} className={tw.card}>
+                <div className={tw.row}>
+                  <div>
+                    <h3 className={tw.name}>{item.name}</h3>
+                    <p className={tw.handle}>
+                      {item.host}
+                      {item.path}
+                    </p>
+                  </div>
+                  <b>{money(item.priceUsd)}</b>
+                </div>
+                <p className={cx(tw.muted, "mt-2")}>{item.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      ))}
       <h2 className={tw.h2}>Pay lab</h2>
       <div className={tw.grid2}>
         <article className={tw.card}>
@@ -119,7 +127,8 @@ export function Apis() {
             >
               {apis.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name} · {money(item.priceUsd)}
+                  {categoryLabel(item.category)} · {item.name} ·{" "}
+                  {money(item.priceUsd)}
                 </option>
               ))}
             </select>

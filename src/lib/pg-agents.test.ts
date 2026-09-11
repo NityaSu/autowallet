@@ -44,6 +44,23 @@ describe("agent ledger", () => {
         "99999999-9999-9999-9999-999999999999",
       );
       expect(hidden).toBeNull();
+
+      const travel = agents.find((a) => a.handle === "travel-agent.pay");
+      expect(travel).toBeTruthy();
+      if (!travel) return;
+      const hotel = await attemptAgentPay(sunik.id, {
+        agentId: travel.id,
+        apiId: "hotel",
+        idempotencyKey: `hotel-${Date.now()}`,
+      });
+      expect(hotel.ok).toBe(true);
+      const bus = await attemptAgentPay(sunik.id, {
+        agentId: travel.id,
+        apiId: "bus",
+        idempotencyKey: `bus-${Date.now()}`,
+      });
+      expect(bus.ok).toBe(false);
+      expect(bus.reason).toContain("allowlist");
     },
     20000,
   );
@@ -133,6 +150,50 @@ describe("agent ledger", () => {
       const csv = toAgentAuditCsv(all.slice(0, 1));
       expect(csv).toContain("id,at,agent_id,agent_handle,agent_name");
       expect(csv).toContain(blocked.paymentId!);
+    },
+    20000,
+  );
+
+  it(
+    "serializes parallel pays against the daily cap",
+    async () => {
+      await ensureDb();
+      const sunik = await findUserByHandle("sunik.pay");
+      expect(sunik).toBeTruthy();
+      if (!sunik) return;
+
+      const prefix = `cap-${Date.now().toString(36)}`;
+      const issued = await issueAgent(sunik.id, {
+        name: "Cap Agent",
+        prefix,
+        dailyCapUsd: 0.05,
+        perRequestMaxUsd: 1,
+      });
+      expect(issued.ok).toBe(true);
+      if (!issued.ok) return;
+
+      const funded = await fundAgent(sunik.id, issued.agent.id, {
+        amountUsd: 5,
+        idempotencyKey: `fund-cap-${prefix}`,
+      });
+      expect(funded.ok).toBe(true);
+
+      const results = await Promise.all(
+        Array.from({ length: 8 }, (_, i) =>
+          attemptAgentPay(sunik.id, {
+            agentId: issued.agent.id,
+            apiId: "search",
+            idempotencyKey: `cap-${prefix}-${i}`,
+          }),
+        ),
+      );
+      const settled = results.filter((r) => r.ok);
+      expect(settled.length).toBeLessThanOrEqual(2);
+      const after = (await listAgentsForOwner(sunik.id)).find(
+        (a) => a.id === issued.agent.id,
+      );
+      expect(after?.spentTodayUsd).toBeCloseTo(settled.length * 0.02, 2);
+      expect(after?.spentTodayUsd ?? 0).toBeLessThanOrEqual(0.05 + 1e-9);
     },
     20000,
   );

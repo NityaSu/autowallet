@@ -51,6 +51,7 @@ export type PaidApi = {
   priceUsd: number;
   description: string;
   payload: string;
+  category: "hotel" | "flight" | "bus" | "tools" | "blocked";
 };
 
 export type Payment = {
@@ -163,6 +164,19 @@ export const agentSeed: Agent[] = [
     allowlist: ["data.example.com"],
     publicKey: "0xb77d…12f0",
   },
+  {
+    id: "travel",
+    name: "Travel Agent",
+    handle: "travel-agent.pay",
+    status: "active",
+    balanceUsd: 400,
+    fundedUsd: 400,
+    spentTodayUsd: 0,
+    dailyCapUsd: 500,
+    perRequestMaxUsd: 200,
+    allowlist: ["api.hotels.example", "api.flights.example"],
+    publicKey: "0xa41e…7c08",
+  },
 ];
 
 export const apiSeed: PaidApi[] = [
@@ -174,6 +188,7 @@ export const apiSeed: PaidApi[] = [
     priceUsd: 0.02,
     description: "Cheap lookup. Research Agent should settle this.",
     payload: '{ "hits": 12, "top": "x402 wallets" }',
+    category: "tools",
   },
   {
     id: "llm",
@@ -183,6 +198,7 @@ export const apiSeed: PaidApi[] = [
     priceUsd: 0.14,
     description: "Inference call. On Research and Coding allowlists.",
     payload: '{ "text": "payment settled" }',
+    category: "tools",
   },
   {
     id: "data",
@@ -192,6 +208,7 @@ export const apiSeed: PaidApi[] = [
     priceUsd: 0.08,
     description: "Structured rows. Allowed for every seeded agent.",
     payload: '{ "rows": 40 }',
+    category: "tools",
   },
   {
     id: "unknown",
@@ -201,6 +218,37 @@ export const apiSeed: PaidApi[] = [
     priceUsd: 2,
     description: "Not on any allowlist — policy should block.",
     payload: '{ "blocked": true }',
+    category: "blocked",
+  },
+  {
+    id: "hotel",
+    name: "Hotel hold",
+    host: "api.hotels.example",
+    path: "/v1/book",
+    priceUsd: 89,
+    description: "Two-night hold. Travel Agent should settle this.",
+    payload: '{ "city": "Bangkok", "nights": 2 }',
+    category: "hotel",
+  },
+  {
+    id: "flight",
+    name: "Flight hold",
+    host: "api.flights.example",
+    path: "/v1/book",
+    priceUsd: 149,
+    description: "One-way hold. On Travel Agent’s allowlist.",
+    payload: '{ "from": "BKK", "to": "NRT" }',
+    category: "flight",
+  },
+  {
+    id: "bus",
+    name: "Bus ticket",
+    host: "api.buses.example",
+    path: "/v1/book",
+    priceUsd: 45,
+    description: "Not on Travel Agent — policy should 402.",
+    payload: '{ "route": "Bangkok–Chiang Mai" }',
+    category: "bus",
   },
 ];
 

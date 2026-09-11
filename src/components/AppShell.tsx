@@ -12,7 +12,7 @@ import {
   Shield,
   Wallet,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CloudMark } from "@/components/CloudMark";
 import { DemoBanner } from "@/components/DemoBanner";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -43,6 +43,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { account, you } = useWallet();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onKey(ev: KeyboardEvent) {
+      if (ev.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
   const initials = (you?.name ?? account.owner)
     .split(" ")
     .map((p) => p[0])
@@ -56,10 +66,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="grid min-h-dvh min-w-0 grid-cols-1 overflow-x-hidden bg-background text-foreground lg:grid-cols-[248px_1fr]">
+      {menuOpen ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 bg-black/30 lg:hidden"
+          aria-label="Close menu"
+          onClick={() => setMenuOpen(false)}
+        />
+      ) : null}
       <aside
         className={cx(
-          "flex-col border-r border-line bg-white px-3.5 pb-4 pt-5",
-          menuOpen ? "flex" : "hidden lg:flex",
+          "fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col border-r border-line bg-white px-3.5 pt-5 pb-4 transition-transform duration-200 ease-out",
+          menuOpen ? "translate-x-0" : "-translate-x-full pointer-events-none",
+          "lg:pointer-events-auto lg:static lg:z-auto lg:translate-x-0 lg:transition-none",
         )}
         aria-label="App"
       >
@@ -115,7 +134,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             className="inline-flex h-[34px] shrink-0 cursor-pointer items-center rounded-lg border border-line bg-white px-3 text-[13px] text-foreground lg:hidden"
             aria-expanded={menuOpen}
-            aria-label="Open menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
             onClick={() => setMenuOpen((v) => !v)}
           >
             Menu

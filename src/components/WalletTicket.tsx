@@ -71,7 +71,7 @@ export function WalletTicket({
   return (
     <div>
       <div className={styles.wrapper}>
-        <article className={styles.card}>
+        <article className={`${styles.card} ${live ? "" : styles.cardLocked}`}>
           <div className={styles.cardBg} aria-hidden />
           <div className={styles.sheen} aria-hidden />
           <div className={styles.decoCloud} aria-hidden>
@@ -92,14 +92,9 @@ export function WalletTicket({
               />
               <span className={styles.brandText}>AUTOWALLET</span>
             </div>
-            <div className={styles.statusBadge}>
-              <span
-                className={`${styles.statusDot} ${live ? "" : styles.statusPaused}`}
-              />
-              <span className={styles.statusText}>
-                {live ? "Active" : "Locked"}
-              </span>
-            </div>
+            {live ? null : (
+              <span className={styles.lockedBadge}>Locked</span>
+            )}
           </div>
 
           <div className={styles.mid}>

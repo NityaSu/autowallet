@@ -65,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="grid min-h-dvh min-w-0 grid-cols-1 bg-background text-foreground lg:grid-cols-[248px_1fr]">
+    <div className="grid min-h-svh min-w-0 grid-cols-1 bg-background text-foreground lg:grid-cols-[248px_1fr]">
       {menuOpen ? (
         <button
           type="button"
@@ -76,9 +76,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ) : null}
       <aside
         className={cx(
-          "fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col border-r border-line bg-white px-3.5 pt-5 pb-4 transition-transform duration-200 ease-out",
-          menuOpen ? "translate-x-0" : "-translate-x-full pointer-events-none",
-          "lg:pointer-events-auto lg:static lg:z-auto lg:translate-x-0 lg:transition-none",
+          "w-[248px] flex-col border-r border-line bg-white px-3.5 pt-5 pb-4",
+          "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40",
+          menuOpen ? "flex" : "hidden lg:flex",
         )}
         aria-label="App"
       >
@@ -129,7 +129,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-20 flex min-h-16 min-w-0 items-center gap-2 border-b border-line bg-white px-4 pt-[env(safe-area-inset-top,0px)] sm:gap-4 sm:px-6">
+        <header className="fixed top-0 right-0 left-0 z-20 border-b border-line bg-white pt-[env(safe-area-inset-top,0px)] lg:sticky lg:left-auto lg:right-auto lg:pt-0">
+          <div className="flex h-16 min-w-0 items-center gap-2 px-4 sm:gap-4 sm:px-6">
           <button
             type="button"
             className="inline-flex h-[34px] shrink-0 cursor-pointer items-center rounded-lg border border-line bg-white px-3 text-[13px] text-foreground lg:hidden"
@@ -172,7 +173,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               Log out
             </button>
           </div>
+          </div>
         </header>
+        <div
+          className="h-[calc(4rem+env(safe-area-inset-top,0px))] shrink-0 lg:hidden"
+          aria-hidden
+        />
         <main className="min-w-0 px-4 py-5 pb-10 font-sans lg:px-7 lg:py-6 lg:pb-12">
           <DemoBanner />
           {children}

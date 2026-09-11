@@ -23,8 +23,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} h-full antialiased`}>
-      <body className="min-h-full bg-background font-sans text-foreground antialiased">
+    <html lang="en" className={`${spaceGrotesk.variable} antialiased`}>
+      <body className="min-h-svh bg-background font-sans text-foreground antialiased">
         <Suspense>
           <Providers>{children}</Providers>
         </Suspense>

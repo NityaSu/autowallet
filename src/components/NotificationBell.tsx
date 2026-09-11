@@ -202,7 +202,7 @@ export function NotificationBell() {
                 onClick={() => setOpen(false)}
               />
               {panel(
-                "fixed inset-x-3 top-[4.75rem] z-50 flex max-h-[min(70dvh,calc(100dvh-5.5rem))] flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_12px_40px_rgba(28,22,18,0.12)] lg:hidden",
+                "fixed inset-x-3 top-[calc(4rem+env(safe-area-inset-top,0px)+0.75rem)] z-50 flex max-h-[min(70dvh,calc(100svh-5.5rem))] flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_12px_40px_rgba(28,22,18,0.12)] lg:hidden",
               )}
             </>,
             document.body,

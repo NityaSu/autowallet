@@ -65,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="grid min-h-dvh min-w-0 grid-cols-1 overflow-x-hidden bg-background text-foreground lg:grid-cols-[248px_1fr]">
+    <div className="grid min-h-dvh min-w-0 grid-cols-1 bg-background text-foreground lg:grid-cols-[248px_1fr]">
       {menuOpen ? (
         <button
           type="button"
@@ -129,7 +129,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 min-w-0 items-center gap-2 border-b border-line bg-white px-4 sm:gap-4 sm:px-6">
+        <header className="sticky top-0 z-20 flex min-h-16 min-w-0 items-center gap-2 border-b border-line bg-white px-4 pt-[env(safe-area-inset-top,0px)] sm:gap-4 sm:px-6">
           <button
             type="button"
             className="inline-flex h-[34px] shrink-0 cursor-pointer items-center rounded-lg border border-line bg-white px-3 text-[13px] text-foreground lg:hidden"

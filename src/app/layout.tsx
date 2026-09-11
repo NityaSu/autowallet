@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Space_Grotesk } from "next/font/google";
 import { Providers } from "./providers";
@@ -13,6 +13,12 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "AutoWallet",
   description: "Demo P2P wallet. Fake money on a Postgres ledger.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -39,4 +39,9 @@
 html {
   font-feature-settings: "liga" 1, "calt" 1;
   font-optical-sizing: auto;
+  overflow-x: clip;
+}
+
+body {
+  overflow-x: clip;
 }

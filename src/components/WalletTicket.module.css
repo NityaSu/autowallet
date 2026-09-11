@@ -171,25 +171,8 @@
   gap: 10px;
 }
 
-.brandCloud {
-  width: 26px;
-  height: 16px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  position: relative;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+.brandMark {
   flex-shrink: 0;
-}
-
-.brandCloud::before {
-  content: "";
-  position: absolute;
-  width: 13px;
-  height: 13px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 50%;
-  top: -5px;
-  left: 4px;
 }
 
 .brandText {
@@ -510,26 +493,6 @@
   position: relative;
   z-index: 3;
   margin-bottom: auto;
-}
-
-.agentCloud {
-  width: 24px;
-  height: 15px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 14px;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.agentCloud::before {
-  content: "";
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  top: -5px;
-  left: 3px;
 }
 
 .agentBrand {

@@ -1,5 +1,6 @@
 "use client";
 
+import { CloudMark } from "@/components/CloudMark";
 import { PayQr } from "@/components/PayQr";
 import { money, splitName } from "@/lib/money";
 import styles from "./WalletTicket.module.css";
@@ -38,7 +39,13 @@ export function WalletTicket({
           <div className={styles.agentSheen} aria-hidden />
 
           <div className={styles.agentHeader}>
-            <span className={styles.agentCloud} aria-hidden />
+            <CloudMark
+              width={26}
+              height={17}
+              invert
+              decorative
+              className={styles.brandMark}
+            />
             <span className={styles.agentBrand}>AUTOWALLET</span>
           </div>
 
@@ -76,7 +83,13 @@ export function WalletTicket({
 
           <div className={styles.topRow}>
             <div className={styles.brand}>
-              <span className={styles.brandCloud} aria-hidden />
+              <CloudMark
+                width={26}
+                height={17}
+                invert
+                decorative
+                className={styles.brandMark}
+              />
               <span className={styles.brandText}>AUTOWALLET</span>
             </div>
             <div className={styles.statusBadge}>

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { formatTxTime } from "@/lib/money";
 import { NOTIFY_EVENT } from "@/lib/notify-ping";
 import type { NotificationDto } from "@/lib/notification-types";
@@ -19,6 +20,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationDto[]>([]);
   const [unread, setUnread] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -31,6 +33,10 @@ export function NotificationBell() {
     if (!data.ok) return;
     setItems(data.items ?? []);
     setUnread(data.unread ?? 0);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -51,7 +57,10 @@ export function NotificationBell() {
   useEffect(() => {
     if (!open) return;
     function onDoc(ev: MouseEvent) {
-      if (!wrapRef.current?.contains(ev.target as Node)) setOpen(false);
+      const t = ev.target as Node;
+      if (wrapRef.current?.contains(t)) return;
+      if ((t as Element).closest?.("[data-notify-panel]")) return;
+      setOpen(false);
     }
     function onKey(ev: KeyboardEvent) {
       if (ev.key === "Escape") setOpen(false);
@@ -75,6 +84,87 @@ export function NotificationBell() {
 
   const badge = unread > 9 ? "9+" : String(unread);
 
+  function panel(className: string) {
+    return (
+      <div
+        className={className}
+        data-notify-panel
+        role="dialog"
+        aria-label="Notifications"
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+          <strong className="text-[13px] font-semibold">Notifications</strong>
+          <div className="flex items-center gap-2">
+            {unread > 0 ? (
+              <button
+                type="button"
+                className="cursor-pointer border-0 bg-transparent font-sans text-[12px] font-semibold text-brand"
+                onClick={() => void mark(undefined, true)}
+              >
+                Mark all read
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="grid size-8 cursor-pointer place-items-center rounded-lg border-0 bg-transparent text-muted lg:hidden"
+              aria-label="Close notifications"
+              onClick={() => setOpen(false)}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+        {items.length === 0 ? (
+          <p className="px-4 py-8 text-center text-[13px] text-muted">
+            You&apos;re all caught up.
+          </p>
+        ) : (
+          <ul className="m-0 min-h-0 flex-1 list-none overflow-y-auto p-0">
+            {items.map((n) => (
+              <li key={n.id} className="border-b border-line last:border-b-0">
+                <Link
+                  href={n.href ?? "/"}
+                  className={cx(
+                    "block px-4 py-3 text-foreground no-underline hover:bg-soft",
+                    !n.read && "bg-[#fffaf6]",
+                  )}
+                  onClick={() => {
+                    setOpen(false);
+                    if (!n.read) void mark(n.id);
+                  }}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <em className="text-[10px] font-semibold tracking-wide text-muted not-italic uppercase">
+                      {KIND_LABEL[n.kind]}
+                    </em>
+                    <time className="font-mono text-[10px] text-muted">
+                      {formatTxTime(n.createdAt)}
+                    </time>
+                  </span>
+                  <span className="mt-1 flex items-start gap-2">
+                    {!n.read ? (
+                      <i className="mt-1.5 size-1.5 shrink-0 rounded-full bg-brand" />
+                    ) : (
+                      <i className="mt-1.5 size-1.5 shrink-0" />
+                    )}
+                    <span className="min-w-0">
+                      <strong className="block text-[13px] font-semibold">
+                        {n.title}
+                      </strong>
+                      <span className="mt-0.5 block text-[12px] leading-snug text-muted">
+                        {n.body}
+                      </span>
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="relative" ref={wrapRef}>
       <button
@@ -96,73 +186,28 @@ export function NotificationBell() {
         ) : null}
       </button>
 
-      {open ? (
-        <div
-          className="absolute top-12 right-0 z-30 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-white shadow-[0_12px_40px_rgba(28,22,18,0.12)]"
-          role="dialog"
-          aria-label="Notifications"
-        >
-          <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-            <strong className="text-[13px] font-semibold">Notifications</strong>
-            {unread > 0 ? (
+      {open
+        ? panel(
+            "absolute top-12 right-0 z-30 hidden max-h-[min(420px,60vh)] w-[380px] flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_12px_40px_rgba(28,22,18,0.12)] lg:flex",
+          )
+        : null}
+
+      {open && mounted
+        ? createPortal(
+            <>
               <button
                 type="button"
-                className="cursor-pointer border-0 bg-transparent font-sans text-[12px] font-semibold text-brand"
-                onClick={() => void mark(undefined, true)}
-              >
-                Mark all read
-              </button>
-            ) : null}
-          </div>
-          {items.length === 0 ? (
-            <p className="px-4 py-8 text-center text-[13px] text-muted">
-              You&apos;re all caught up.
-            </p>
-          ) : (
-            <ul className="m-0 max-h-[min(420px,60vh)] list-none overflow-y-auto p-0">
-              {items.map((n) => (
-                <li key={n.id} className="border-b border-line last:border-b-0">
-                  <Link
-                    href={n.href ?? "/"}
-                    className={cx(
-                      "block px-4 py-3 text-foreground no-underline hover:bg-soft",
-                      !n.read && "bg-[#fffaf6]",
-                    )}
-                    onClick={() => {
-                      setOpen(false);
-                      if (!n.read) void mark(n.id);
-                    }}
-                  >
-                    <span className="flex items-center justify-between gap-2">
-                      <em className="text-[10px] font-semibold tracking-wide text-muted not-italic uppercase">
-                        {KIND_LABEL[n.kind]}
-                      </em>
-                      <time className="font-mono text-[10px] text-muted">
-                        {formatTxTime(n.createdAt)}
-                      </time>
-                    </span>
-                    <span className="mt-1 flex items-start gap-2">
-                      {!n.read ? (
-                        <i className="mt-1.5 size-1.5 shrink-0 rounded-full bg-brand" />
-                      ) : (
-                        <i className="mt-1.5 size-1.5 shrink-0" />
-                      )}
-                      <span>
-                        <strong className="block text-[13px] font-semibold">
-                          {n.title}
-                        </strong>
-                        <span className="mt-0.5 block text-[12px] leading-snug text-muted">
-                          {n.body}
-                        </span>
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ) : null}
+                className="fixed inset-0 z-50 bg-black/30 lg:hidden"
+                aria-label="Close notifications"
+                onClick={() => setOpen(false)}
+              />
+              {panel(
+                "fixed inset-x-3 top-[4.75rem] z-50 flex max-h-[min(70dvh,calc(100dvh-5.5rem))] flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_12px_40px_rgba(28,22,18,0.12)] lg:hidden",
+              )}
+            </>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

@@ -163,11 +163,11 @@ export function Overview() {
                 className="grid grid-cols-1 items-center gap-3 border-t border-line py-3 text-foreground no-underline sm:grid-cols-[1fr_auto]"
                 key={person.id}
               >
-                <div>
+                <div className="min-w-0">
                   <strong className="block text-sm">{person.name}</strong>
-                  <p className={tw.handle}>{person.handle}</p>
+                  <p className={cx(tw.handle, "sm:hidden")}>{person.handle}</p>
                 </div>
-                <div>
+                <div className="hidden sm:block">
                   <span className="block text-[11px] text-muted">Handle</span>
                   <b className="font-mono text-sm">{person.handle}</b>
                 </div>

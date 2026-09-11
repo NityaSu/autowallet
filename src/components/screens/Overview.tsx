@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Activity,
   ArrowLeftRight,
-  BookOpen,
+  Bot,
   Shield,
   Target,
   TrendingDown,
@@ -340,8 +340,8 @@ export function Overview() {
               {(
                 [
                   { href: "/send", icon: ArrowLeftRight, label: "Send money" },
+                  { href: "/agents", icon: Bot, label: "Agents" },
                   { href: "/activity", icon: Activity, label: "Activity" },
-                  { href: "/settings", icon: BookOpen, label: "Settings" },
                 ] as const
               ).map((action) => (
                 <button

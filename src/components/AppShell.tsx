@@ -25,12 +25,12 @@ import { cx } from "@/lib/tw";
 const links = [
   { href: "/", label: "Overview", icon: LayoutDashboard, inNav: true },
   { href: "/send", label: "Send", icon: ArrowLeftRight, inNav: true },
-  { href: "/activity", label: "Activity", icon: Activity, inNav: true },
-  { href: "/settings", label: "Settings", icon: Settings, inNav: true },
   { href: "/agents", label: "Agents", icon: Bot, inNav: true },
+  { href: "/activity", label: "Activity", icon: Activity, inNav: true },
   { href: "/wallets", label: "Wallets", icon: Wallet, inNav: true },
   { href: "/policies", label: "Policies", icon: Shield, inNav: true },
   { href: "/apis", label: "API Endpoints", icon: Globe, inNav: true },
+  { href: "/settings", label: "Settings", icon: Settings, inNav: true },
 ] as const;
 
 function isOn(href: string, path: string) {

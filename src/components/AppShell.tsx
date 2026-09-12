@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from "react";
 import { CloudMark } from "@/components/CloudMark";
 import { DemoBanner } from "@/components/DemoBanner";
+import { LedgerSkeleton } from "@/components/LedgerSkeleton";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ScanPayQr } from "@/components/ScanPayQr";
 import { useWallet } from "@/context/WalletProvider";
@@ -41,7 +42,7 @@ function isOn(href: string, path: string) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
-  const { account, you } = useWallet();
+  const { you, ledgerReady, ledgerError } = useWallet();
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
-  const initials = (you?.name ?? account.owner)
+  const initials = you.name
     .split(" ")
     .map((p) => p[0])
     .join("")
@@ -123,8 +124,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span className="text-[11px] tracking-wider text-muted uppercase">
             Balance
           </span>
-          <b className="mt-1 block text-brand">{money(you.balanceUsd)}</b>
-          <p className="mt-1 mb-0 text-xs text-muted">{you.handle}</p>
+          {ledgerReady ? (
+            <>
+              <b className="mt-1 block text-brand">{money(you.balanceUsd)}</b>
+              <p className="mt-1 mb-0 text-xs text-muted">{you.handle}</p>
+            </>
+          ) : (
+            <>
+              <span className="mt-2 block h-5 w-20 animate-pulse rounded-md bg-line" />
+              <span className="mt-2 block h-3 w-24 animate-pulse rounded-md bg-line" />
+            </>
+          )}
         </div>
       </aside>
 
@@ -144,7 +154,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <NotificationBell />
             <ScanPayQr
               variant="icon"
-              disabled={Boolean(you.locked)}
+              disabled={!ledgerReady || Boolean(you.locked)}
               onFound={(handle) =>
                 router.push(`/send?to=${encodeURIComponent(handle)}`)
               }
@@ -153,16 +163,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               href="/settings"
               className="flex min-w-0 items-center gap-2 rounded-xl py-1 pr-1 pl-1 text-foreground no-underline sm:gap-2.5 sm:pr-2"
             >
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-xs font-bold text-white">
-                {initials}
-              </span>
+              {ledgerReady ? (
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-xs font-bold text-white">
+                  {initials}
+                </span>
+              ) : (
+                <span className="size-9 shrink-0 animate-pulse rounded-full bg-line" />
+              )}
               <span className="hidden min-w-0 sm:block">
-                <strong className="block truncate text-[13px] font-semibold">
-                  {you.name}
-                </strong>
-                <em className="block truncate font-mono text-[11px] not-italic text-muted">
-                  {you.handle}
-                </em>
+                {ledgerReady ? (
+                  <>
+                    <strong className="block truncate text-[13px] font-semibold">
+                      {you.name}
+                    </strong>
+                    <em className="block truncate font-mono text-[11px] not-italic text-muted">
+                      {you.handle}
+                    </em>
+                  </>
+                ) : (
+                  <>
+                    <span className="block h-3.5 w-24 animate-pulse rounded bg-line" />
+                    <span className="mt-1.5 block h-2.5 w-20 animate-pulse rounded bg-line" />
+                  </>
+                )}
               </span>
             </Link>
             <button
@@ -181,7 +204,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
         <main className="min-w-0 px-4 py-5 pb-10 font-sans lg:px-7 lg:py-6 lg:pb-12">
           <DemoBanner />
-          {children}
+          {ledgerError ? (
+            <p className={cx(tw.bad, "font-semibold")}>{ledgerError}</p>
+          ) : ledgerReady ? (
+            children
+          ) : (
+            <LedgerSkeleton />
+          )}
         </main>
       </div>
     </div>

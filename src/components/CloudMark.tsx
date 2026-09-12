@@ -11,10 +11,10 @@ export function CloudMark({
   invert?: boolean;
   decorative?: boolean;
 }) {
-  const fill = invert ? "rgba(255,255,255,0.18)" : "rgba(45,24,14,0.1)";
-  const stroke = invert ? "rgba(255,255,255,0.95)" : "rgba(45,24,14,0.55)";
-  const dotA = invert ? "rgba(255,255,255,0.9)" : "rgba(45,24,14,0.35)";
-  const dotB = invert ? "rgba(255,255,255,0.65)" : "rgba(45,24,14,0.25)";
+  const fill = invert ? "rgba(255,255,255,0.18)" : "rgba(243,128,32,0.18)";
+  const stroke = invert ? "rgba(255,255,255,0.95)" : "#F38020";
+  const dotA = invert ? "rgba(255,255,255,0.9)" : "#F38020";
+  const dotB = invert ? "rgba(255,255,255,0.65)" : "#FAAE40";
 
   return (
     <svg

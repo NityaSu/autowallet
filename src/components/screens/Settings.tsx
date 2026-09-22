@@ -105,6 +105,11 @@ export function Settings() {
     }
   }
 
+  async function logout() {
+    await fetch("/api/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
   return (
     <section className={tw.page}>
       <h1 className={tw.h1}>Settings</h1>
@@ -120,6 +125,13 @@ export function Settings() {
             <b className="text-[15px]">{you.handle}</b>
           </div>
         </div>
+        <button
+          type="button"
+          className={cx(tw.btn, "mt-4")}
+          onClick={() => void logout()}
+        >
+          Log out
+        </button>
       </article>
 
       <h2 className={tw.h2}>Wallet lock</h2>

@@ -59,11 +59,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     .join("")
     .slice(0, 2);
 
-  async function logout() {
-    await fetch("/api/logout", { method: "POST" });
-    window.location.href = "/login";
-  }
-
   return (
     <div className="grid min-h-svh min-w-0 grid-cols-1 bg-background text-foreground lg:grid-cols-[248px_1fr]">
       {menuOpen ? (
@@ -187,13 +182,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 )}
               </span>
             </Link>
-            <button
-              type="button"
-              className={cx(tw.btn, "shrink-0")}
-              onClick={() => void logout()}
-            >
-              Log out
-            </button>
           </div>
           </div>
         </header>

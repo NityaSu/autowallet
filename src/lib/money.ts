@@ -79,6 +79,32 @@ export function formatTxTime(iso: string, now = new Date()) {
   return formatDateTime(d, d.getFullYear() !== now.getFullYear());
 }
 
+export function formatDayHeading(iso: string, now = new Date()) {
+  const d = parseWhen(iso);
+  if (!d) return iso;
+  if (startOfLocalDay(d) === startOfLocalDay(now)) return "Today";
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  if (startOfLocalDay(d) === startOfLocalDay(yesterday)) return "Yesterday";
+  const monthDay = `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  return d.getFullYear() !== now.getFullYear()
+    ? `${monthDay}, ${d.getFullYear()}`
+    : monthDay;
+}
+
+export function groupByLocalDay<T extends { at: string }>(
+  items: T[],
+  now = new Date(),
+) {
+  const groups: { heading: string; items: T[] }[] = [];
+  for (const item of items) {
+    const heading = formatDayHeading(item.at, now);
+    const last = groups.at(-1);
+    if (last?.heading === heading) last.items.push(item);
+    else groups.push({ heading, items: [item] });
+  }
+  return groups;
+}
+
 export function splitName(full: string) {
   const i = full.trim().indexOf(" ");
   if (i === -1) return { first: full, last: "" };

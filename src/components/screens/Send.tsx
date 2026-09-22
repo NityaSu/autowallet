@@ -7,8 +7,9 @@ import { useWallet } from "@/context/WalletProvider";
 import { CopyHandle } from "@/components/CopyHandle";
 import { RequestMoney } from "@/components/RequestMoney";
 import { ScanPayQr } from "@/components/ScanPayQr";
+import { TransferFeed } from "@/components/TransferFeed";
 import { completeHandle } from "@/lib/ledger-types";
-import { formatTxTime, money } from "@/lib/money";
+import { money } from "@/lib/money";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
@@ -16,7 +17,7 @@ type Found = { id: string; name: string; handle: string };
 
 export function Send() {
   const search = useSearchParams();
-  const { you, people, transfers, sendToPerson, ledgerReady, ledgerError } =
+  const { you, people, transfers, sendToPerson, ledgerReady, ledgerError, agents } =
     useWallet();
   const queryTo = search.get("to") ?? "";
   const recent = people.filter((p) => p.handle !== you.handle);
@@ -339,30 +340,13 @@ export function Send() {
       )}
 
       <h2 className={tw.h2}>Transfers</h2>
-      {transfers.length === 0 ? (
-        <p className={tw.muted}>Nothing sent yet.</p>
-      ) : (
-        <ul className={tw.pay}>
-          {transfers.map((tx) => (
-            <li key={tx.id} className={tw.payItem}>
-              <Link
-                href={`/activity/${tx.id}`}
-                className="contents text-foreground no-underline"
-              >
-                <span>
-                  {tx.fromHandle} → {tx.toHandle}
-                  <span className={tw.muted}>
-                    {" "}
-                    · {tx.memo} · {formatTxTime(tx.at)}
-                  </span>
-                </span>
-                <b className={tw.amt}>{money(tx.amountUsd)}</b>
-                <em className={tw.ok}>✓ Settled</em>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <TransferFeed
+        transfers={transfers}
+        you={you}
+        people={people}
+        agents={agents}
+        empty="Nothing sent yet."
+      />
         </>
       )}
     </section>

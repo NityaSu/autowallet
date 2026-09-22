@@ -57,17 +57,13 @@ export function LoginForm() {
   return (
     <div className="grid min-h-dvh place-items-center bg-background p-6">
       <div className="w-full max-w-[420px] rounded-2xl border border-line bg-white p-6 shadow-[0_18px_40px_rgba(45,24,16,0.08)]">
-        <div className={cx(tw.brand, "mb-[18px]")}>
+        <div className={cx(tw.brand, "mb-5")}>
           <CloudMark width={38} height={25} />
           <span>
             <strong className={tw.brandName}>AutoWallet</strong>
-            <em className={tw.brandTag}>Demo — no real money</em>
+            <em className={tw.brandTag}>Portfolio demo</em>
           </span>
         </div>
-        <p className={cx(tw.sub, "mb-4")}>
-          This is a portfolio demonstration. No real money is transacted. All
-          balances are simulated.
-        </p>
         <form onSubmit={onSubmit}>
           {mode === "signup" ? (
             <label className={tw.field}>
@@ -119,32 +115,25 @@ export function LoginForm() {
                 : "Log in"}
           </button>
         </form>
-        <p className={cx(tw.muted, "mt-4")}>
-          {mode === "login" ? (
-            <>
-              Demo accounts (password <b>demo</b>): <code>sunik.pay</code> ·{" "}
-              <code>midas.pay</code>
-              <button
-                type="button"
-                className={cx(tw.textBtn, "ml-1")}
-                onClick={() => switchMode("signup")}
-              >
-                Create an account
-              </button>
-            </>
-          ) : (
-            <>
-              Starts with $50.00 fake money.{" "}
-              <button
-                type="button"
-                className={tw.textBtn}
-                onClick={() => switchMode("login")}
-              >
-                Log in instead
-              </button>
-            </>
-          )}
-        </p>
+        <div className="mt-4 flex flex-col gap-2">
+          <p className={cx(tw.muted, "m-0 text-[13px]")}>
+            {mode === "login" ? (
+              <>
+                Try <code>sunik.pay</code> or <code>midas.pay</code> — password{" "}
+                <b>demo</b>
+              </>
+            ) : (
+              "New wallets start with $50."
+            )}
+          </p>
+          <button
+            type="button"
+            className={cx(tw.textBtn, "self-start px-0")}
+            onClick={() => switchMode(mode === "login" ? "signup" : "login")}
+          >
+            {mode === "login" ? "Create an account" : "Log in instead"}
+          </button>
+        </div>
       </div>
     </div>
   );

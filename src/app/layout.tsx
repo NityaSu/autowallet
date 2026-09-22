@@ -11,8 +11,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AutoWallet",
-  description: "AutoWallet — P2P and agent wallets.",
+  title: {
+    default: "Autowallet",
+    template: "Autowallet | %s",
+  },
+  description: "Autowallet — P2P and agent wallets.",
 };
 
 export const viewport: Viewport = {

@@ -54,7 +54,7 @@ export function Receipt({ transferId }: { transferId: string }) {
         ← Activity
       </Link>
       <h1 className={tw.h1}>Receipt</h1>
-      <p className={tw.sub}>One ledger row. Fake money, real id.</p>
+      <p className={tw.sub}>Ledger receipt.</p>
 
       {!ready ? (
         <p className={cx(tw.muted, "mt-4")}>Loading…</p>

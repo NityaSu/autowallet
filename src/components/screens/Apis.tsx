@@ -76,8 +76,8 @@ export function Apis() {
     <section className={tw.page}>
       <h1 className={tw.h1}>APIs</h1>
       <p className={tw.sub}>
-        Demo merchants. Travel Agent may book hotel and flight; bus is off the
-        allowlist. Pay is real on the ledger — nothing calls a live airline.
+        Sample merchants. Travel Agent may book hotel and flight; bus is off
+        the allowlist.
       </p>
       {groups.map((group) => (
         <div key={group.category} className="mb-[22px]">

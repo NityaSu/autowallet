@@ -59,7 +59,7 @@ export function AgentPaymentReceipt({ paymentId }: { paymentId: string }) {
         ← Agents
       </Link>
       <h1 className={tw.h1}>Agent payment receipt</h1>
-      <p className={tw.sub}>402 pay row on the ledger — settled or blocked by policy.</p>
+      <p className={tw.sub}>Ledger receipt. Settled or blocked by policy.</p>
 
       {!ready ? (
         <p className={cx(tw.muted, "mt-4")}>Loading…</p>

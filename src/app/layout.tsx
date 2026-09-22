@@ -12,7 +12,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "AutoWallet",
-  description: "Demo P2P wallet. Fake money on a Postgres ledger.",
+  description: "AutoWallet — P2P and agent wallets.",
 };
 
 export const viewport: Viewport = {

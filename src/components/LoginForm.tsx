@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CloudMark } from "@/components/CloudMark";
+import { SandboxBadge } from "@/components/SandboxBadge";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
@@ -60,10 +61,16 @@ export function LoginForm() {
         <div className={cx(tw.brand, "mb-5")}>
           <CloudMark width={38} height={25} />
           <span>
-            <strong className={tw.brandName}>AutoWallet</strong>
-            <em className={tw.brandTag}>Portfolio demo</em>
+            <span className="flex flex-wrap items-center gap-1.5">
+              <strong className={tw.brandName}>AutoWallet</strong>
+              <SandboxBadge />
+            </span>
+            <em className={tw.brandTag}>Virtual wallets</em>
           </span>
         </div>
+        <p className={cx(tw.sub, "mb-5")}>
+          Sandbox environment. Simulated balances for demonstration.
+        </p>
         <form onSubmit={onSubmit}>
           {mode === "signup" ? (
             <label className={tw.field}>

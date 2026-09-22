@@ -108,7 +108,7 @@ export function Settings() {
   return (
     <section className={tw.page}>
       <h1 className={tw.h1}>Settings</h1>
-      <p className={tw.sub}>Account identity for this personal PoC.</p>
+      <p className={tw.sub}>Your account.</p>
       <article className={tw.card}>
         <div className={tw.meta}>
           <div>
@@ -118,10 +118,6 @@ export function Settings() {
           <div>
             <span className="block text-xs text-muted">Handle</span>
             <b className="text-[15px]">{you.handle}</b>
-          </div>
-          <div>
-            <span className="block text-xs text-muted">Rail</span>
-            <b className="text-[15px]">Fake USD on Postgres</b>
           </div>
         </div>
       </article>
@@ -218,11 +214,6 @@ export function Settings() {
           </ul>
         )}
       </article>
-
-      <p className={tw.note}>
-        AutoWallet is a portfolio demo. P2P transfers and agent wallets are
-        recorded on a real Postgres ledger with fake money.
-      </p>
     </section>
   );
 }

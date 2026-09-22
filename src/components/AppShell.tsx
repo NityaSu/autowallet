@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CloudMark } from "@/components/CloudMark";
-import { DemoBanner } from "@/components/DemoBanner";
 import { LedgerSkeleton } from "@/components/LedgerSkeleton";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ScanPayQr } from "@/components/ScanPayQr";
@@ -203,7 +202,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-hidden
         />
         <main className="min-w-0 px-4 py-5 pb-10 font-sans lg:px-7 lg:py-6 lg:pb-12">
-          <DemoBanner />
           {ledgerError ? (
             <p className={cx(tw.bad, "font-semibold")}>{ledgerError}</p>
           ) : ledgerReady ? (

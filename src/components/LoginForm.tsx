@@ -61,15 +61,15 @@ export function LoginForm() {
         <div className={cx(tw.brand, "mb-5")}>
           <CloudMark width={38} height={25} />
           <span>
-            <span className="flex flex-wrap items-center gap-1.5">
-              <strong className={tw.brandName}>AutoWallet</strong>
-              <SandboxBadge />
-            </span>
+            <strong className={tw.brandName}>AutoWallet</strong>
             <em className={tw.brandTag}>Virtual wallets</em>
           </span>
         </div>
         <p className={cx(tw.sub, "mb-5")}>
-          Sandbox environment. Simulated balances for demonstration.
+          <SandboxBadge className="mb-2" />
+          <span className="block">
+            Sandbox environment. Simulated balances for demonstration.
+          </span>
         </p>
         <form onSubmit={onSubmit}>
           {mode === "signup" ? (

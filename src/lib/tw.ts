@@ -57,7 +57,8 @@ export const agentHead = "flex items-start justify-between gap-3";
 export const who = "flex items-center gap-3";
 export const brand =
   "flex items-center gap-2.5 text-left text-foreground no-underline";
-export const brandName = "block text-[15px] font-semibold tracking-normal";
+export const brandName =
+  "block font-sans text-sm font-extrabold uppercase tracking-[0.28em] [font-feature-settings:normal]";
 export const brandTag = "mt-0.5 block font-sans text-[11px] not-italic text-muted";
 export const ovSplit =
   "mb-3.5 grid grid-cols-1 gap-3.5 xl:grid-cols-[1.35fr_0.9fr]";

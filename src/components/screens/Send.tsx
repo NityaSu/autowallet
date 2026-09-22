@@ -201,8 +201,8 @@ export function Send() {
       <div className="mb-4 mt-[18px] grid grid-cols-1 gap-3.5 xl:grid-cols-4">
         <article className={tw.stat}>
           <div>
-            <span className="block text-xs font-semibold text-muted">You</span>
-            <strong className="mt-2 mb-1.5 block text-[26px] tracking-tight text-brand">
+            <span className="block text-xs font-medium text-muted">You</span>
+            <strong className={cx(tw.figure, "mt-2 mb-1.5 block text-[26px]")}>
               {money(you.balanceUsd)}
             </strong>
             <em className="mb-3 block text-xs not-italic text-muted">
@@ -216,8 +216,8 @@ export function Send() {
         {found ? (
           <article className={tw.stat}>
             <div>
-              <span className="block text-xs font-semibold text-muted">Them</span>
-              <strong className="mt-2 mb-1.5 block text-[26px] tracking-tight">
+              <span className="block text-xs font-medium text-muted">Them</span>
+              <strong className="mt-2 mb-1.5 block text-[26px] font-semibold">
                 {found.name}
               </strong>
               <em className="text-xs not-italic text-muted">{found.handle}</em>

@@ -136,8 +136,8 @@ export function RequestMoney() {
       {found ? (
         <article className={cx(tw.stat, "mb-4")}>
           <div>
-            <span className="block text-xs font-semibold text-muted">Ask</span>
-            <strong className="mt-2 mb-1.5 block text-[26px] tracking-tight">
+            <span className="block text-xs font-medium text-muted">Ask</span>
+            <strong className="mt-2 mb-1.5 block text-[26px] font-semibold">
               {found.name}
             </strong>
             <em className="text-xs not-italic text-muted">{found.handle}</em>

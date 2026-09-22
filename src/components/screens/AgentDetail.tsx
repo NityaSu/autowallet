@@ -193,7 +193,7 @@ export function AgentDetail({ agentId }: { agentId: string }) {
       <div className={tw.grid2}>
         <article className={tw.card}>
           <span className={tw.kicker}>Wallet Balance</span>
-          <strong className="mt-3.5 mb-2 block text-4xl tracking-tight">
+          <strong className={cx(tw.figure, "mt-3.5 mb-2 block text-4xl")}>
             {money(agent.balanceUsd)}
           </strong>
           <p className={tw.muted}>+ {money(agent.fundedUsd)} funded</p>

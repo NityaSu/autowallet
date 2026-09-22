@@ -7,11 +7,8 @@ import {
   Activity,
   ArrowLeftRight,
   Bot,
-  Shield,
-  Target,
   TrendingDown,
   TrendingUp,
-  Wallet,
 } from "lucide-react";
 import { CopyHandle } from "@/components/CopyHandle";
 import { WalletTicket } from "@/components/WalletTicket";
@@ -68,24 +65,31 @@ export function Overview() {
       <div className={tw.stats}>
         <article className={tw.stat}>
           <div className="min-w-0">
-            <span className="block text-xs font-semibold text-muted">
+            <span className="block text-xs font-medium text-muted">
               Total Balance
             </span>
-            <strong className="mt-2 mb-1.5 block text-[20px] tracking-tight text-brand sm:text-[26px]">
+            <strong
+              className={cx(
+                tw.figure,
+                "mt-2 mb-1.5 block text-[20px] sm:text-[26px]",
+              )}
+            >
               {money(account.balanceUsd)}
             </strong>
             <em className="text-xs not-italic text-muted">Available to send</em>
           </div>
-          <i className={cx(tw.ovIco, "hidden sm:grid")}>
-            <Wallet size={18} />
-          </i>
         </article>
         <article className={tw.stat}>
           <div className="min-w-0">
-            <span className="block text-xs font-semibold text-muted">
+            <span className="block text-xs font-medium text-muted">
               Spent Today
             </span>
-            <strong className="mt-2 mb-1.5 block text-[20px] tracking-tight text-brand sm:text-[26px]">
+            <strong
+              className={cx(
+                tw.figure,
+                "mt-2 mb-1.5 block text-[20px] sm:text-[26px]",
+              )}
+            >
               {money(stats.spentToday)}
             </strong>
             {stats.spentDeltaPct === null ? (
@@ -109,30 +113,34 @@ export function Overview() {
               </em>
             )}
           </div>
-          <i className={cx(tw.ovIco, "hidden sm:grid")}>
-            <TrendingUp size={18} />
-          </i>
         </article>
         <article className={tw.stat}>
           <div className="min-w-0">
-            <span className="block text-xs font-semibold text-muted">
+            <span className="block text-xs font-medium text-muted">
               Total Payments
             </span>
-            <strong className="mt-2 mb-1.5 block text-[20px] tracking-tight sm:text-[26px]">
+            <strong
+              className={cx(
+                tw.figure,
+                "mt-2 mb-1.5 block text-[20px] sm:text-[26px]",
+              )}
+            >
               {stats.totalPayments.toLocaleString()}
             </strong>
             <em className="text-xs not-italic text-muted">P2P sends</em>
           </div>
-          <i className={cx(tw.ovIco, "hidden sm:grid")}>
-            <Target size={18} />
-          </i>
         </article>
         <article className={tw.stat}>
           <div className="min-w-0">
-            <span className="block text-xs font-semibold text-muted">
+            <span className="block text-xs font-medium text-muted">
               Successful Rate
             </span>
-            <strong className="mt-2 mb-1.5 block text-[20px] tracking-tight text-brand sm:text-[26px]">
+            <strong
+              className={cx(
+                tw.figure,
+                "mt-2 mb-1.5 block text-[20px] sm:text-[26px]",
+              )}
+            >
               {stats.successRate}%
             </strong>
             <em className="text-xs not-italic text-muted">
@@ -141,9 +149,6 @@ export function Overview() {
                 : "Settled P2P transfers"}
             </em>
           </div>
-          <i className={cx(tw.ovIcoOk, "hidden sm:grid")}>
-            <Shield size={18} />
-          </i>
         </article>
       </div>
 
@@ -350,7 +355,7 @@ export function Overview() {
                   className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-line bg-[#f8f9fb] px-2 py-3.5 font-sans text-xs font-semibold text-foreground"
                   onClick={() => router.push(action.href)}
                 >
-                  <action.icon size={18} className="text-brand" />
+                  <action.icon size={18} className="text-muted" />
                   {action.label}
                 </button>
               ))}

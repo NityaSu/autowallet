@@ -3,9 +3,8 @@ export function cx(...parts: Array<string | false | null | undefined>) {
 }
 
 export const page = "max-w-[1100px]";
-export const hello =
-  "mb-1.5 text-[28px] font-bold tracking-tight text-foreground";
-export const h1 = "mb-1.5 text-[26px] font-semibold tracking-tight";
+export const hello = "mb-1.5 text-[28px] font-semibold text-foreground";
+export const h1 = "mb-1.5 text-[26px] font-semibold";
 export const h2 = "mt-7 mb-3 text-base font-semibold";
 export const sub = "m-0 text-sm text-muted";
 export const muted = "text-muted";
@@ -21,8 +20,7 @@ export const textBtn =
 export const field = "flex flex-col gap-1.5 text-xs font-semibold text-muted";
 export const control =
   "h-[38px] rounded-[10px] border border-line bg-white px-2.5 font-sans text-[13px] text-foreground outline-none";
-export const kicker =
-  "block text-xs font-semibold uppercase tracking-wide text-muted";
+export const kicker = "block text-xs font-medium text-muted";
 export const handle = "mt-0.5 font-mono text-[13px] text-muted";
 export const avatar =
   "grid size-10 shrink-0 place-items-center rounded-xl bg-soft text-brand";
@@ -41,7 +39,8 @@ export const pay =
   "m-0 list-none overflow-hidden rounded-2xl border border-line bg-white p-0";
 export const payItem =
   "grid grid-cols-[1fr_auto] items-center gap-3 border-b border-line px-[18px] py-[13px] text-sm last:border-b-0 md:grid-cols-[1fr_auto_auto]";
-export const amt = "font-mono font-semibold tabular-nums";
+export const amt = "font-semibold tabular-nums";
+export const figure = "font-semibold tabular-nums text-foreground";
 export const ok = "text-xs font-semibold not-italic text-ok";
 export const bad = "text-xs font-semibold not-italic text-bad";
 export const pillOk =
@@ -58,15 +57,10 @@ export const agentHead = "flex items-start justify-between gap-3";
 export const who = "flex items-center gap-3";
 export const brand =
   "flex items-center gap-2.5 text-left text-foreground no-underline";
-export const brandName =
-  "block font-brand text-sm font-extrabold uppercase tracking-[0.28em] [font-feature-settings:normal]";
+export const brandName = "block text-[15px] font-semibold tracking-normal";
 export const brandTag = "mt-0.5 block font-sans text-[11px] not-italic text-muted";
 export const ovSplit =
   "mb-3.5 grid grid-cols-1 gap-3.5 xl:grid-cols-[1.35fr_0.9fr]";
-export const ovIco =
-  "grid size-9 shrink-0 place-items-center rounded-[10px] bg-soft text-brand";
-export const ovIcoOk =
-  "grid size-9 shrink-0 place-items-center rounded-[10px] bg-[#eaf7ef] text-ok";
 export const allow =
   "mt-2.5 mb-0 list-none p-0 [&>li]:flex [&>li]:items-center [&>li]:justify-between [&>li]:border-b [&>li]:border-line [&>li]:py-2 [&>li]:text-[13px]";
 export const log =

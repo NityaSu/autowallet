@@ -68,7 +68,7 @@ export function AgentPaymentReceipt({ paymentId }: { paymentId: string }) {
       ) : (
         <article className={cx(tw.card, "mt-4")}>
           <span className={tw.kicker}>Amount</span>
-          <strong className="mt-2 mb-4 block text-4xl tracking-tight text-brand">
+          <strong className={cx(tw.figure, "mt-2 mb-4 block text-4xl")}>
             {money(payment.amountUsd)}
           </strong>
           <div className={tw.meta}>

@@ -39,7 +39,7 @@ export function SpendBar({
           ))}
         </div>
         {showAmount ? (
-          <span className="shrink-0 font-mono text-[15px] tabular-nums">
+          <span className="shrink-0 text-[15px] font-semibold tabular-nums">
             {money(spent)}
           </span>
         ) : null}

@@ -48,7 +48,7 @@ export function Wallets() {
 
       <article className={cx(tw.card, "mb-4")}>
         <span className={tw.kicker}>Account wallet</span>
-        <strong className="mt-2.5 mb-1 block text-[32px]">
+        <strong className={cx(tw.figure, "mt-2.5 mb-1 block text-[32px]")}>
           {money(account.balanceUsd)}
         </strong>
         <p className={tw.muted}>

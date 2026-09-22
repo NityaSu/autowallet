@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-space-grotesk",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} antialiased`}>
+    <html lang="en" className={`${inter.variable} antialiased`}>
       <body className="min-h-svh bg-background font-sans text-foreground antialiased">
         <Suspense>
           <Providers>{children}</Providers>

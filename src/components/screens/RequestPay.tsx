@@ -140,7 +140,7 @@ export function RequestPay({ requestId }: { requestId: string }) {
       ) : request ? (
         <article className={cx(tw.card, "mt-4")}>
           <span className={tw.kicker}>{statusLabel(request.status)}</span>
-          <strong className="mt-2 mb-4 block text-4xl tracking-tight text-brand">
+          <strong className={cx(tw.figure, "mt-2 mb-4 block text-4xl")}>
             {money(request.amountUsd)}
           </strong>
           <div className={tw.meta}>

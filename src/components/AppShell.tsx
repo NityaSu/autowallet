@@ -121,12 +121,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="mt-3 rounded-xl border border-line bg-[#fafbfc] p-3">
-          <span className="text-[11px] tracking-wider text-muted uppercase">
-            Balance
-          </span>
+          <span className="text-[11px] font-medium text-muted">Balance</span>
           {ledgerReady ? (
             <>
-              <b className="mt-1 block text-brand">{money(you.balanceUsd)}</b>
+              <b className="mt-1 block text-[15px] font-semibold tabular-nums text-foreground">
+                {money(you.balanceUsd)}
+              </b>
               <p className="mt-1 mb-0 text-xs text-muted">{you.handle}</p>
             </>
           ) : (

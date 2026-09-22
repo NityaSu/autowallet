@@ -236,7 +236,7 @@ export function ScanPayQr({
                 className={cx(tw.btn, "bg-white")}
                 onClick={() => photoRef.current?.click()}
               >
-                Use photo
+                Upload image
               </button>
               <button
                 type="button"
@@ -250,8 +250,7 @@ export function ScanPayQr({
           <input
             ref={photoRef}
             type="file"
-            accept="image/*"
-            capture="environment"
+            accept="image/png,image/jpeg,image/webp,image/gif"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];

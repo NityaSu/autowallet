@@ -7,7 +7,7 @@ import { SpendBar } from "@/components/SpendBar";
 import { WalletTicket } from "@/components/WalletTicket";
 import { useWallet } from "@/context/WalletProvider";
 import type { AuditEntry, Pagination } from "@/data/wallets";
-import { money } from "@/lib/money";
+import { formatTxDateTime, formatTxTime, money } from "@/lib/money";
 import { pingNotifications } from "@/lib/notify-ping";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
@@ -310,7 +310,7 @@ export function AgentDetail({ agentId }: { agentId: string }) {
               <span>
                 {money(tx.amountUsd)} · {tx.apiName}
               </span>
-              <span className={tw.muted}>{tx.at}</span>
+              <span className={tw.muted}>{formatTxTime(tx.at)}</span>
               <em className={tx.status === "settled" ? tw.ok : tw.bad}>
                 {tx.status === "settled" ? "✓ Settled" : "✕ Blocked"}
               </em>
@@ -408,14 +408,8 @@ export function AgentDetail({ agentId }: { agentId: string }) {
                       key={entry.id}
                       className="border-t border-line first:border-t-0"
                     >
-                      <td className="px-4 py-3 font-mono text-xs">
-                        {new Date(entry.at).toLocaleString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        })}
+                      <td className="px-4 py-3 text-xs whitespace-nowrap text-muted">
+                        {formatTxDateTime(entry.at)}
                       </td>
                       <td className="px-4 py-3">{entry.apiName}</td>
                       <td className="px-4 py-3 font-mono text-xs">{entry.host}</td>

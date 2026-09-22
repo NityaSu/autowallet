@@ -6,20 +6,77 @@ export function money(n: number) {
   return `$${n.toFixed(2)}`;
 }
 
-export function clockNow() {
-  return new Date().toLocaleTimeString("en-GB", { hour12: false });
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
+function parseWhen(iso: string) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function formatTxTime(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+function startOfLocalDay(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+function formatTime12(d: Date) {
+  const minute = String(d.getMinutes()).padStart(2, "0");
+  const hour24 = d.getHours();
+  const suffix = hour24 >= 12 ? "PM" : "AM";
+  const hour = hour24 % 12 || 12;
+  return `${hour}:${minute} ${suffix}`;
+}
+
+function formatDateTime(d: Date, withYear: boolean) {
+  const monthDay = `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  const date = withYear ? `${monthDay}, ${d.getFullYear()}` : monthDay;
+  return `${date}, ${formatTime12(d)}`;
+}
+
+export function clockNow() {
+  return formatTime12(new Date());
+}
+
+/** Stripe / GitHub style: Sep 22, 2026, 2:41 PM */
+export function formatTxDateTime(iso: string) {
+  const d = parseWhen(iso);
+  return d ? formatDateTime(d, true) : iso;
+}
+
+/** Lists and notifications: Just now, 5 min ago, Yesterday, Sep 22, 2:41 PM */
+export function formatTxTime(iso: string, now = new Date()) {
+  const d = parseWhen(iso);
+  if (!d) return iso;
+
+  const diffMs = now.getTime() - d.getTime();
+  if (Math.abs(diffMs) < 45_000) return "Just now";
+  if (diffMs < 0) return formatDateTime(d, d.getFullYear() !== now.getFullYear());
+
+  const diffMin = Math.round(diffMs / 60_000);
+  if (diffMin < 60) return diffMin <= 1 ? "1 min ago" : `${diffMin} min ago`;
+
+  const diffHr = Math.round(diffMs / 3_600_000);
+  if (diffHr < 24 && startOfLocalDay(d) === startOfLocalDay(now)) {
+    return diffHr <= 1 ? "1 hr ago" : `${diffHr} hr ago`;
+  }
+
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  if (startOfLocalDay(d) === startOfLocalDay(yesterday)) {
+    return `Yesterday, ${formatTime12(d)}`;
+  }
+
+  return formatDateTime(d, d.getFullYear() !== now.getFullYear());
 }
 
 export function splitName(full: string) {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useWallet } from "@/context/WalletProvider";
-import { money } from "@/lib/money";
+import { formatTxTime, money } from "@/lib/money";
 import * as tw from "@/lib/tw";
 
 export function Activity() {
@@ -33,7 +33,7 @@ export function Activity() {
                   {tx.fromHandle} → {tx.toHandle}
                   <span className={tw.muted}>
                     {" "}
-                    · {tx.memo} · {tx.at}
+                    · {tx.memo} · {formatTxTime(tx.at)}
                   </span>
                 </span>
                 <b className={tw.amt}>{money(tx.amountUsd)}</b>
@@ -52,7 +52,7 @@ export function Activity() {
               <li key={tx.id} className={tw.payItem}>
                 <span>
                   {agentName(tx.agentId)} → {tx.apiName}
-                  <span className={tw.muted}> · {tx.at}</span>
+                  <span className={tw.muted}> · {formatTxTime(tx.at)}</span>
                 </span>
                 <b className={tw.amt}>{money(tx.amountUsd)}</b>
                 <em className={tx.status === "settled" ? tw.ok : tw.bad}>

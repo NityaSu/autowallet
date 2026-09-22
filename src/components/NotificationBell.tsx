@@ -137,7 +137,10 @@ export function NotificationBell() {
                     <em className="text-[10px] font-semibold tracking-wide text-muted not-italic uppercase">
                       {KIND_LABEL[n.kind]}
                     </em>
-                    <time className="font-mono text-[10px] text-muted">
+                    <time
+                      className="text-[10px] text-muted"
+                      dateTime={n.createdAt}
+                    >
                       {formatTxTime(n.createdAt)}
                     </time>
                   </span>

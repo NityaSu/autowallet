@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { formatTxTime, money } from "@/lib/money";
+import { formatTxDateTime, money } from "@/lib/money";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
@@ -85,8 +85,8 @@ export function Receipt({ transferId }: { transferId: string }) {
           <p className={cx(tw.kicker, "mt-5")}>Memo</p>
           <p className="mt-1 text-sm">{transfer.memo}</p>
           <p className={cx(tw.kicker, "mt-5")}>Time</p>
-          <p className={cx(tw.muted, "mt-1 font-mono text-[13px]")}>
-            {formatTxTime(transfer.at)}
+          <p className={cx(tw.muted, "mt-1 text-[13px]")}>
+            {formatTxDateTime(transfer.at)}
           </p>
           <p className={cx(tw.kicker, "mt-5")}>Transfer id</p>
           <p className="mt-1 break-all font-mono text-[13px] text-muted">

@@ -8,7 +8,7 @@ import { CopyHandle } from "@/components/CopyHandle";
 import { RequestMoney } from "@/components/RequestMoney";
 import { ScanPayQr } from "@/components/ScanPayQr";
 import { completeHandle } from "@/lib/ledger-types";
-import { money } from "@/lib/money";
+import { formatTxTime, money } from "@/lib/money";
 import * as tw from "@/lib/tw";
 import { cx } from "@/lib/tw";
 
@@ -353,7 +353,7 @@ export function Send() {
                   {tx.fromHandle} → {tx.toHandle}
                   <span className={tw.muted}>
                     {" "}
-                    · {tx.memo} · {tx.at}
+                    · {tx.memo} · {formatTxTime(tx.at)}
                   </span>
                 </span>
                 <b className={tw.amt}>{money(tx.amountUsd)}</b>

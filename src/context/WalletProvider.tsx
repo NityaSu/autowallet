@@ -123,14 +123,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setPeople(data.recipients ?? data.people ?? []);
     setTransfers(data.transfers ?? []);
     setAgents(data.agents ?? []);
-    setPayments(
-      (data.payments ?? []).map((p) => ({
-        ...p,
-        at: p.at.includes("T")
-          ? new Date(p.at).toLocaleTimeString("en-US", { hour12: false })
-          : p.at,
-      })),
-    );
+    setPayments(data.payments ?? []);
     setApis(data.apis ?? []);
     setAccount((acc) => ({
       ...acc,

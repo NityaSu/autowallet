@@ -16,6 +16,9 @@ export const metadata: Metadata = {
     template: "Autowallet | %s",
   },
   description: "Autowallet — P2P and agent wallets.",
+  icons: {
+    icon: [{ url: "/icon.svg?v=4", type: "image/svg+xml" }],
+  },
 };
 
 export const viewport: Viewport = {

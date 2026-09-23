@@ -1,3 +1,7 @@
+"use client";
+
+import { useId } from "react";
+
 /** Soft brand wash — sits with `--color-brand` (#fc6203) on light UI. */
 const BRAND = "#fc6203";
 const BRAND_SOFT = "#ff8a4a";
@@ -22,7 +26,10 @@ export function CloudMark({
   invert?: boolean;
   decorative?: boolean;
 }) {
-  const fill = invert ? "rgba(255,255,255,0.18)" : "url(#aw-cloud-fill)";
+  const uid = useId().replace(/:/g, "");
+  const fillId = `aw-cloud-fill-${uid}`;
+  const hiId = `aw-cloud-hi-${uid}`;
+  const fill = invert ? "rgba(255,255,255,0.18)" : `url(#${fillId})`;
   const stroke = invert ? "rgba(255,255,255,0.95)" : BRAND;
   const dotA = invert ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.92)";
   const dotB = invert ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.7)";
@@ -47,7 +54,7 @@ export function CloudMark({
       {invert ? null : (
         <defs>
           <linearGradient
-            id="aw-cloud-fill"
+            id={fillId}
             x1="0%"
             y1="0%"
             x2="0%"
@@ -57,7 +64,7 @@ export function CloudMark({
             <stop offset="55%" stopColor={BRAND} />
             <stop offset="100%" stopColor={BRAND} />
           </linearGradient>
-          <radialGradient id="aw-cloud-hi" cx="20%" cy="20%" r="50%">
+          <radialGradient id={hiId} cx="20%" cy="20%" r="50%">
             <stop offset="0%" stopColor="rgba(255,255,255,0.35)" />
             <stop offset="60%" stopColor="rgba(255,255,255,0)" />
           </radialGradient>
@@ -71,7 +78,7 @@ export function CloudMark({
         strokeLinejoin="round"
         strokeLinecap="round"
       />
-      {invert ? null : <path d={CLOUD_PATH} fill="url(#aw-cloud-hi)" />}
+      {invert ? null : <path d={CLOUD_PATH} fill={`url(#${hiId})`} />}
       <circle cx="14" cy="8" r="2.2" fill={dotA} />
       <circle cx="22" cy="6" r="1.6" fill={dotB} />
     </svg>

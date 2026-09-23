@@ -137,12 +137,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex h-16 min-w-0 items-center gap-2 px-4 sm:gap-4 sm:px-6">
           <button
             type="button"
-            className="inline-flex h-[34px] shrink-0 cursor-pointer items-center rounded-lg border border-line bg-white px-3 text-[13px] text-foreground lg:hidden"
+            className="inline-flex shrink-0 cursor-pointer items-center lg:hidden"
             aria-expanded={menuOpen}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             onClick={() => setMenuOpen((v) => !v)}
           >
-            Menu
+            <CloudMark
+              width={38}
+              height={25}
+              decorative
+              className="pointer-events-none"
+            />
           </button>
           <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-2.5">
             <NotificationBell />
